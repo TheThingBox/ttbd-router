@@ -1,5 +1,6 @@
 module.exports = function(app, dir, RED, settings_nodered) {
     var exec_opt = {hydra_exec_host: "mosquitto"}
+    var exec_bash_opt = Object.assign({type: "bash"}, exec_opt)
     var bodyParser = require('body-parser');
     var mustache = require('mustache');
     var exec = require('ttbd-exec');
@@ -37,7 +38,7 @@ module.exports = function(app, dir, RED, settings_nodered) {
     }
 
     function setAP(enable, callback){
-        exec({file: getScript((enable===true?'enable_ap':'disable_ap'))}, exec_opt, function(err, stdout, stderr){
+        exec({file: getScript((enable===true?'enable_ap':'disable_ap'))}, exec_bash_opt, function(err, stdout, stderr){
             if(err){
                 console.log(`set access point to ${enable}`);
                 console.log(err);
@@ -67,14 +68,14 @@ network={
 EOF
 
 `
-        exec({file: script_set_wifi}, exec_opt, function(err, stdout, stderr) {
+        exec({file: script_set_wifi}, exec_bash_opt, function(err, stdout, stderr) {
             if(err){
                 console.log('setWiFi');
                 console.log(err);
                 console.log(stderr);
                 console.log(stdout);
             }
-            exec({file: script_set_ssid}, exec_opt, function(err2, stdout2, stderr2) {
+            exec({file: script_set_ssid}, exec_bash_opt, function(err2, stdout2, stderr2) {
                 if(err2){
                     console.log('setSSID');
                     console.log(err2);
