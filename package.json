@@ -1,0 +1,29 @@
+{
+  "name": "ttb-router",
+  "description": "Express route to use for thethingbox",
+  "private": true,
+  "version": "0.0.2",
+  "main": "index.js",
+  "routes": [{
+    "name": "portal",
+    "file": "routes/portal.js"
+  }, {
+    "name": "Welcome",
+    "file": "routes/welcome.js"
+  }, {
+    "name": "CGU",
+    "file": "routes/cgu.js"
+  }, {
+    "name": "icon",
+    "file": "routes/favicon.js"
+  }, {
+    "name": "Node-RED",
+    "file": "routes/red.js"
+  }],
+  "dependencies": {
+    "mustache": "2.3.0",
+    "ttbd-exec": "TheThingBox/ttbd-exec#f9d47d8",
+    "ttbd-iwlist": "TheThingBox/ttbd-iwlist#e9ec7ca",
+    "ttbd-node-interfaces": "TheThingBox/ttbd-node-interfaces#1bb65af"
+  }
+}
