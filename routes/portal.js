@@ -28,7 +28,7 @@ module.exports = function(app, dir, RED, settings_nodered) {
         }
       }
       if(sc.hasOwnProperty(mode)){
-        let script_path = path.join(__dirname, '..', 'nodes_modules', 'ttbd-node-interfaces', 'scripts', sc[mode].file)
+        let script_path = path.join(__dirname, '..', 'node_modules', 'ttbd-node-interfaces', 'scripts', sc[mode].file)
         if(fs.existsSync(script_path) === false){
             return null
         }
