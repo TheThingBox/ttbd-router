@@ -9,6 +9,10 @@ module.exports = function(app, dir, RED, settings_nodered) {
     var fs = require("fs");
     var path = require("path");
 
+    if(fs.existsSync(path.join(dir, 'views', 'portal.ejs')) === false){
+        return false
+    }
+
     function getScript(mode){
       var sc = {
         enable_ap: {
