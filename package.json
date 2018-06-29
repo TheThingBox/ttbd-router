@@ -24,6 +24,6 @@
     "mustache": "2.3.0",
     "ttbd-exec": "TheThingBox/ttbd-exec#f9d47d8",
     "ttbd-iwlist": "TheThingBox/ttbd-iwlist#e9ec7ca",
-    "ttbd-node-interfaces": "TheThingBox/ttbd-node-interfaces#cf00d2e"
+    "ttbd-node-interfaces": "TheThingBox/ttbd-node-interfaces#327b6ee"
   }
 }
