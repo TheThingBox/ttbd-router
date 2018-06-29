@@ -104,6 +104,21 @@ EOF
         });
     }
 
+    function getHostname(callback){
+        exec('cat /etc/hostname', exec_opt, function(err, stdout, stderr){
+            if(err){
+                console.log('hostname');
+                console.log(err);
+                console.log(stdout);
+                console.log(stderr);
+            }
+            if(typeof callback === "function"){
+                callback(err, stdout.replace(/[\r\n\t\f\v]/g, "").trim().replace(/[ ]+/g,"_"));
+            }
+        });
+
+    }
+
     function ipLinkShowParseParam(line, key){
         let paramIndex = line.indexOf(key)
         if(paramIndex !== -1 && paramIndex < line.length-1){
@@ -193,10 +208,16 @@ EOF
                             if(err){
                                 res.status(500).json({message:"Cannot set the Wifi", error: err});
                             } else {
-                                res.json({message: "The WiFi "+ data.ssid +" has been set.<br/>I will reboot in a few seconds.<br/>Please connect your computer/phone on this network.", hostname: os.hostname()});
-                                setAP(false, function(){
-                                     setTimeout(reboot, 2000);
-                                });
+                                getHostname(function(err2, hostname){
+                                    if(hostname){
+                                        res.json({message: "The WiFi "+ data.ssid +" has been set.<br/>I will reboot in a few seconds.<br/>Please connect your computer/phone on this network.", hostname: hostname});
+                                        setAP(false, function(){
+                                             setTimeout(reboot, 2000);
+                                        });
+                                    } else {
+                                        res.status(500).json({message:"Cannot get the hostname", error: err2});
+                                    }
+                                })
                             }
                         });
                     }
