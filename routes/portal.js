@@ -94,7 +94,7 @@ EOF
     }
 
     function reboot(){
-        var reboot = exec('reboot', exec_opt, function(err, stdout, stderr){
+        exec('reboot', exec_opt, function(err, stdout, stderr){
             if(err){
                 console.log('reboot');
                 console.log(err);
