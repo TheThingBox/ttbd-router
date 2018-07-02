@@ -55,9 +55,47 @@ module.exports = function(app, dir, RED, settings_nodered) {
         });
     }
 
+    function getPassphrase(params, callback){
+        var script_get_passphrase = `#!/bin/bash
+
+TMPFILE=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+
+wpa_passphrase ${params.ssid} <<EOF > /tmp/.$TMPFILE
+${params.password}
+EOF
+
+sed -i '/#psk=/d' /tmp/.$TMPFILE
+PASSPHRASE=\`cat  /tmp/.$TMPFILE | grep "psk=" | cut -d "=" -f 2\`
+rm /tmp/.$TMPFILE
+
+echo "$PASSPHRASE"
+
+`
+        if(params.secured === 'true' || params.secured === true){
+            exec({file: script_get_passphrase}, exec_bash_opt, function(err, stdout, stderr){
+                if(err){
+                    console.log('script_get_passphrase');
+                    console.log(err);
+                    console.log(stdout);
+                    console.log(stderr);
+                }
+                if(typeof callback === "function"){
+                    var password = null
+                    if(stdout){
+                        password = stdout.replace(/[\r\n\t\f\v]/g, "").trim()
+                    }
+                    callback(err, password);
+                }
+            });
+        } else if(typeof callback === "function"){
+            callback(null, null)
+        }
+    }
+
     function setWiFi(params, callback){
         var script_set_wifi = getScript('set_wifi')
-        var script_set_ssid = `#!/bin/bash
+        getPassphrase(params, function(err, passphrase){
+            var script_set_ssid = `#!/bin/bash
 
 cat <<EOF > /etc/wpa_supplicant/wpa_supplicant.conf &
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
@@ -65,32 +103,34 @@ update_config=1
 
 network={
     ssid="${params.ssid}"
-    ${(params.secured === 'true' || params.secured === true)?`psk="${params.password}"`:''}
-    ${(params.secured === 'true' || params.secured === true)?'key_mgmt=WPA-PSK':'key_mgmt=NONE'}
+    ${(passphrase !== null)?`psk=${passphrase}`:''}
+    ${(passphrase !== null)?'key_mgmt=WPA-PSK':'key_mgmt=NONE'}
 }
 
 EOF
 
 `
-        exec({file: script_set_wifi}, exec_bash_opt, function(err, stdout, stderr) {
-            if(err){
-                console.log('setWiFi');
-                console.log(err);
-                console.log(stderr);
-                console.log(stdout);
-            }
-            exec({file: script_set_ssid}, exec_bash_opt, function(err2, stdout2, stderr2) {
+            exec({file: script_set_wifi}, exec_bash_opt, function(err2, stdout2, stderr2) {
                 if(err2){
-                    console.log('setSSID');
+                    console.log('setWiFi');
                     console.log(err2);
                     console.log(stderr2);
                     console.log(stdout2);
                 }
-                if(typeof callback === "function"){
-                    callback(err);
-                }
+                exec({file: script_set_ssid}, exec_bash_opt, function(err3, stdout3, stderr3) {
+                    if(err3){
+                        console.log('setSSID');
+                        console.log(err3);
+                        console.log(stderr3);
+                        console.log(stdout3);
+                    }
+                    if(typeof callback === "function"){
+                        callback(err3);
+                    }
+                });
             });
-        });
+        })
+
     }
 
     function reboot(){
