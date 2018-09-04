@@ -22,8 +22,8 @@
   }],
   "dependencies": {
     "mustache": "2.3.0",
-    "ttbd-exec": "TheThingBox/ttbd-exec#8b44afa",
+    "ttbd-exec": "TheThingBox/ttbd-exec#8595423",
     "ttbd-iwlist": "TheThingBox/ttbd-iwlist#90c1ae6",
-    "ttbd-node-interfaces": "TheThingBox/ttbd-node-interfaces#a89d2a1"
+    "ttbd-node-interfaces": "TheThingBox/ttbd-node-interfaces#4ed5fd7"
   }
 }
