@@ -197,72 +197,74 @@ EOF
     app.set('view engine', 'ejs');
 
     try {
-        getInterfaces(function(interfaces){
-            if(!interfaces || !interfaces.hasOwnProperty('wlan0')){
-                return
-            }
-
-            if(interfaces.hasOwnProperty('eth0') && interfaces.eth0.hasOwnProperty('state') && interfaces.eth0.state.toLowerCase() === 'up'){
-                return
-            }
-
-            iw.associated(function(err, associated){
-                if(associated){
+        setTimeout( () => {
+            getInterfaces(function(interfaces){
+                if(!interfaces || !interfaces.hasOwnProperty('wlan0')){
                     return
                 }
-                setAP(true, function(){
-                    setTimeout(setAP, 600000, false)
-                });
-                app.use("/portal", bodyParser.urlencoded({ extended: true }));
-                app.get("/portal", function(req, res) {
-                    res.header("Access-Control-Allow-Origin", "*");
-                    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-                    iw.scan(function(err, networks){
-                        var wifilist;
-                        if(err){
-                            wifilist = [];
-                        } else {
-                            wifilist = networks.filter(function(e){
-                                return (e.essid)?true:false;
-                            }).filter((thing, index, self) =>
-                                index === self.findIndex((t) => t.essid === thing.essid)
-                            );
-                        }
 
-                        res.render('portal', {
-                            wifilist: {
-                                secured: wifilist.filter(function(d){return d.encrypted}),
-                                open: wifilist.filter(function(d){return !d.encrypted})
+                if(interfaces.hasOwnProperty('eth0') && interfaces.eth0.hasOwnProperty('state') && interfaces.eth0.state.toLowerCase() === 'up'){
+                    return
+                }
+
+                iw.associated(function(err, associated){
+                    if(associated){
+                        return
+                    }
+                    setAP(true, function(){
+                        setTimeout(setAP, 600000, false)
+                    });
+                    app.use("/portal", bodyParser.urlencoded({ extended: true }));
+                    app.get("/portal", function(req, res) {
+                        res.header("Access-Control-Allow-Origin", "*");
+                        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+                        iw.scan(function(err, networks){
+                            var wifilist;
+                            if(err){
+                                wifilist = [];
+                            } else {
+                                wifilist = networks.filter(function(e){
+                                    return (e.essid)?true:false;
+                                }).filter((thing, index, self) =>
+                                    index === self.findIndex((t) => t.essid === thing.essid)
+                                );
                             }
+
+                            res.render('portal', {
+                                wifilist: {
+                                    secured: wifilist.filter(function(d){return d.encrypted}),
+                                    open: wifilist.filter(function(d){return !d.encrypted})
+                                }
+                            });
                         });
                     });
-                });
 
-                app.post("/portal", function(req, res) {
-                    var data = req.body;
-                    if((data.secured === "true" || data.secured === true) && data.password === ""){
-                        res.status(403).json({message: "Password should be filled", error: "no_password"})
-                    } else {
-                        setWiFi(data, function(err){
-                            if(err){
-                                res.status(500).json({message:"Cannot set the Wifi", error: err});
-                            } else {
-                                getHostname(function(err2, hostname){
-                                    if(hostname){
-                                        res.json({message: "The WiFi "+ data.ssid +" has been set.<br/>I will reboot in a few seconds.<br/>Please connect your computer/phone on this network.", hostname: hostname});
-                                        setAP(false, function(){
-                                             setTimeout(reboot, 2000);
-                                        });
-                                    } else {
-                                        res.status(500).json({message:"Cannot get the hostname", error: err2});
-                                    }
-                                })
-                            }
-                        });
-                    }
+                    app.post("/portal", function(req, res) {
+                        var data = req.body;
+                        if((data.secured === "true" || data.secured === true) && data.password === ""){
+                            res.status(403).json({message: "Password should be filled", error: "no_password"})
+                        } else {
+                            setWiFi(data, function(err){
+                                if(err){
+                                    res.status(500).json({message:"Cannot set the Wifi", error: err});
+                                } else {
+                                    getHostname(function(err2, hostname){
+                                        if(hostname){
+                                            res.json({message: "The WiFi "+ data.ssid +" has been set.<br/>I will reboot in a few seconds.<br/>Please connect your computer/phone on this network.", hostname: hostname});
+                                            setAP(false, function(){
+                                                 setTimeout(reboot, 2000);
+                                            });
+                                        } else {
+                                            res.status(500).json({message:"Cannot get the hostname", error: err2});
+                                        }
+                                    })
+                                }
+                            });
+                        }
+                    });
                 });
             });
-        });
+        }, 25000);
     } catch(e){}
 
     return true;
