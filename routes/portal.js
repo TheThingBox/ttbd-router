@@ -203,7 +203,6 @@ EOF
             }
 
             if(interfaces.hasOwnProperty('eth0') && interfaces.eth0.hasOwnProperty('state') && interfaces.eth0.state.toLowerCase() === 'up'){
-                setAP(false);
                 return
             }
 
