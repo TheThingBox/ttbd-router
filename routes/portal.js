@@ -144,6 +144,19 @@ EOF
         });
     }
 
+    function accessPointIsEnable(callback){
+      if(!callback || typeof callback !== 'function'){
+        callback = function(){}
+      }
+      exec("sed -n '/TTB START DEFINITION ACCESS_POINT/=' /etc/dhcpcd.conf", exec_opt, function(err, stdout, stderr){
+        var res = false
+        if(stdout && stdout.trim() !== ''){
+          res = true
+        }
+        callback(res)
+      });
+    }
+
     function getHostname(callback){
         exec('cat /etc/hostname', exec_opt, function(err, stdout, stderr){
             if(err){
@@ -274,6 +287,11 @@ EOF
                 }
 
                 if(interfaces.hasOwnProperty('eth0') && interfaces.eth0.hasOwnProperty('state') && interfaces.eth0.state.toLowerCase() === 'up'){
+                    accessPointIsEnable( (enabled) => {
+                        if(enabled){
+                            setAP(false)
+                        }
+                    })
                     return
                 }
 
@@ -281,9 +299,12 @@ EOF
                     if(associated){
                         return
                     }
-                    setAP(true, function(){
+                    accessPointIsEnable( (enabled) => {
+                        if(!enabled){
+                            setAP(true);
+                        }
                         setTimeout(setAP, 600000, false)
-                    });
+                    })
                 });
             });
         }, 25000);
