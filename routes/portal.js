@@ -5,6 +5,7 @@ module.exports = function(app, dir, RED, settings_nodered) {
     var mustache = require('mustache');
     var exec = require('ttbd-exec');
     var iw = require('ttbd-iwlist')('wlan0', exec_opt);
+    var emptyWifiList = { wifilist: { secured: [], open: [] } }
 
     var fs = require("fs");
     var path = require("path");
@@ -222,12 +223,7 @@ EOF
                       scanWiFi(callback, tryNumber)
                   }, 2000)
               } else {
-                  callback({
-                      wifilist: {
-                          secured: [],
-                          open: []
-                      }
-                  })
+                  callback(emptyWifiList)
               }
               return
           }
@@ -250,15 +246,15 @@ EOF
     app.get("/portal", function(req, res) {
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-        scanWiFi( (data) => {
-          res.render('portal', data)
-        })
+        res.render('portal', emptyWifiList)
     });
 
     app.post("/portal", function(req, res) {
         var data = req.body;
         if((data.secured === "true" || data.secured === true) && data.password === ""){
             res.status(403).json({message: "Password should be filled", error: "no_password"})
+        } else if(!data.ssid) {
+            res.status(403).json({message: "Missing WiFi ssid", error: "no_ssid"})
         } else {
             setWiFi(data, function(err){
                 if(err){
@@ -277,6 +273,22 @@ EOF
                 }
             });
         }
+    });
+
+    app.get("/wifi/scan", function(req, res) {
+        var _tout = false
+        scanWiFi(function(data){
+          if(!_tout){
+            _tout = true
+            res.send(data)
+          }
+        })
+        setTimeout(function(){
+          if(!_tout){
+            _tout = true
+            res.send(emptyWifiList)
+          }
+        }, 10000)
     });
 
     try {
