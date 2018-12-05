@@ -23,6 +23,7 @@
   "dependencies": {
     "mustache": "2.3.0",
     "basic-auth": "2.0.1",
+    "bcrypt": "3.0.2",
     "ttbd-exec": "TheThingBox/ttbd-exec#8595423",
     "ttbd-iwlist": "TheThingBox/ttbd-iwlist#90c1ae6",
     "ttbd-node-interfaces": "TheThingBox/ttbd-node-interfaces#4ed5fd7"
