@@ -111,16 +111,16 @@ network={
 EOF
 
 `
-            exec({file: script_set_wifi}, exec_bash_opt, function(err2, stdout2, stderr2) {
+            exec({file: script_set_ssid}, exec_bash_opt, function(err2, stdout2, stderr2) {
                 if(err2){
-                    console.log('setWiFi');
+                    console.log('setSSID');
                     console.log(err2);
                     console.log(stderr2);
                     console.log(stdout2);
                 }
-                exec({file: script_set_ssid}, exec_bash_opt, function(err3, stdout3, stderr3) {
+                exec({file: script_set_wifi}, exec_bash_opt, function(err3, stdout3, stderr3) {
                     if(err3){
-                        console.log('setSSID');
+                        console.log('setWiFi');
                         console.log(err3);
                         console.log(stderr3);
                         console.log(stdout3);
