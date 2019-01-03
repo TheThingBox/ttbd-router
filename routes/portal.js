@@ -173,6 +173,17 @@ EOF
 
     }
 
+    function getIPs(callback){
+      var ips = [];
+      exec('hostname -I', exec_opt, function(err, stdout, stderr){
+        if(stdout || stdout === ''){
+          stdout = stdout.replace(/\n/g, ' ').trim()
+          ips = stdout.split(' ').filter(e => !e.startsWith('169.254') && !e.startsWith('172.17') && !e.startsWith('172.18') && e !== '127.0.0.1')
+        }
+        callback(ips)
+      })
+    }
+
     function ipLinkShowParseParam(line, key){
         let paramIndex = line.indexOf(key)
         if(paramIndex !== -1 && paramIndex < line.length-1){
@@ -292,34 +303,23 @@ EOF
     });
 
     try {
-        setTimeout( () => {
-            getInterfaces(function(interfaces){
-                if(!interfaces || !interfaces.hasOwnProperty('wlan0')){
-                    return
-                }
-
-                if(interfaces.hasOwnProperty('eth0') && interfaces.eth0.hasOwnProperty('state') && interfaces.eth0.state.toLowerCase() === 'up'){
-                    accessPointIsEnable( (enabled) => {
-                        if(enabled){
-                            setAP(false)
-                        }
-                    })
-                    return
-                }
-
-                iw.associated(function(err, associated){
-                    if(associated){
-                        return
+        getInterfaces(function(interfaces){
+            if(!interfaces || !interfaces.hasOwnProperty('wlan0')){
+                return
+            }
+            getIPs(function(ips){
+                if(ips.length === 0){
+                    setAP(true);
+                    setTimeout(setAP, 600000, false)
+                } else if (ips.indexOf('192.168.61.1') !== -1){
+                    if(ips.length > 1){
+                      setAP(false, reboot);
+                    } else if(ips.length === 1){
+                      setTimeout(setAP, 600000, false)
                     }
-                    accessPointIsEnable( (enabled) => {
-                        if(!enabled){
-                            setAP(true);
-                        }
-                        setTimeout(setAP, 600000, false)
-                    })
-                });
-            });
-        }, 25000);
+                }
+            })
+        });
     } catch(e){}
 
     return true;
