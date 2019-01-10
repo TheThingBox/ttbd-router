@@ -253,12 +253,31 @@ EOF
       })
     }
 
-    app.use("/portal", bodyParser.urlencoded({ extended: true }));
-    app.get("/portal", function(req, res) {
+    function render_portal(req, res){
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         res.render('portal', emptyWifiList)
-    });
+    }    
+
+    app.get("/portal", render_portal);
+
+    function redirect_portal(req, res){
+        res.redirect(302, 'http://192.168.61.1/portal');
+    }
+
+    // captive portal detection : windows
+    app.use("/portal", bodyParser.urlencoded({ extended: true }));
+    app.use("/ncsi.txt", bodyParser.urlencoded({ extended: true }));
+    app.use("/connecttest.txt", bodyParser.urlencoded({ extended: true }));
+    app.get("/ncsi.txt ", redirect_portal);
+    app.get("/connecttest.txt", redirect_portal);
+    app.get("/redirect", render_portal);
+    // captive portal detection : android
+    app.use("/generate_204", bodyParser.urlencoded({ extended: true }));
+    app.get("/generate_204", redirect_portal);
+    // captive portal detection : ios
+    app.use("/hotspot-detect.html", bodyParser.urlencoded({ extended: true }));
+    app.get("/hotspot-detect.html", redirect_portal);
 
     app.post("/portal", function(req, res) {
         var data = req.body;
