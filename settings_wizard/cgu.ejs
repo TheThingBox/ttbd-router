@@ -1,0 +1,709 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>CGU</title>
+    <link rel="stylesheet" media="screen" href="/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" media="screen" href="/vendor/jquery/css/smoothness/jquery-ui-1.10.3.custom.min.css">
+    <link rel="stylesheet" href="/vendor/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/vendor/vendor.css">
+    <link rel="stylesheet" href="/red/style.min.css">
+    <link href="/fonts/AvenirNextLTPro.css" rel="stylesheet" type="text/css">
+    <style>
+        html {
+            height: calc(100% - 40px);
+        }
+        body {
+            background-color: white;
+            padding-top: 40px;
+            font-family: 'Avenir Next LT Pro Regular', sans-serif !important;
+            font-weight: 25px;
+            color: rgb(150,150,150);
+        }
+        .navbar-fixed-top {
+            position: fixed !important;
+        }
+        #notifications {
+          position: fixed;
+        }
+        #cgu{
+            width: 720px;
+            height: 360px;
+            margin: auto;
+            margin-top: 80px;
+        }
+        #createAccount{
+            width: 720px;
+            height: 340px;
+            margin: auto;
+            margin-top: 80px;
+        }
+        #changeName{
+            width: 720px;
+            height: 120px;
+            margin: auto;
+            margin-top: 80px;
+        }
+        .validate {
+            width: 720px;
+            margin: auto;
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+    </style>
+    <script src="/jquery.min.js"></script>
+    <script src="/async.min.js"></script>
+    <script src="/vendor/vendor.js"></script>
+    <script src="/vendor/ace/ace.js"></script>
+    <script src="/vendor/ace/ext-language_tools.js"></script>
+    <script src="/red/red.js"></script>
+    <script src="/red/main.js"></script>
+    <script src="/red/events.js"></script>
+    <script src="/red/i18n.js"></script>
+    <script>
+        RED.settings = {
+            init: function(){}
+        }
+    </script>
+    <script src="/red/user.js"></script>
+    <script src="/red/comms.js"></script>
+    <script src="/red/ui/state.js"></script>
+    <script src="/red/validators.js"></script>
+    <script src="/red/ui/keyboard.js"></script>
+    <script src="/red/ui/view.js"></script>
+    <script src="/red/ui/editor.js"></script>
+    <script src="/red/ui/library.js"></script>
+    <script src="/red/ui/notifications.js"></script>
+</head>
+<body>
+    <div id="notifications"></div>
+    <div id="navbar-container">
+        <div id="header">
+            <span class="logo">
+                <a target="_blank" href="http://thethingbox.io"><img src="/logo.png" style="height: 32px;"></a>
+            </span>
+        </div>
+    </div>
+    <div id="settings-container">
+        <div id="page1" >
+            <div style="float:left; margin-top:0px; margin-left:calc(50% - 361px - 158px);"><img style="width:158px" src="/cgu/45-left-crop.jpg"/></div>
+            <div style="float:right; margin-top:0px; margin-right:calc(50% - 361px - 158px);"><img style="width:158px" src="/cgu/45-right-crop.jpg"/></div>
+            <div id="cgu" class="setting-edit-container" style="border:1px solid #aaa;">
+                <iframe style="float:left;" id="cguIFrame" width="100%" height="100%" marginheight="0px" marginwidth="0px" frameBorder="0px">
+                </iframe>
+            </div>
+            <div class="validate">
+                <label style="float:left;">
+                  <input type="checkbox" id="CGUAccepted" style='margin:0px; margin-top:-2px;'> <span id="acceptCGU"></span>
+                </label>
+                <button id="buttonNext" type="button" class="btn btn-default" style="float:right;" ></button>
+            </div>
+        </div>
+        <div id="page2" class="hide" style="min-width: 720px">
+            <div style="float:left; margin-top:20px; margin-left:calc(50% - 377px - 160px);"><img style="width:160px" src="/cgu/45-left-crop.jpg"/></div>
+            <div style="float:right; margin-top:20px; margin-right:calc(50% - 377px - 160px);"><img style="width:160px" src="/cgu/45-right-crop.jpg"/></div>
+            <div id="createAccount" class="setting-edit-container" style="border:1px solid #aaa;padding:16px">
+                <form style="float:left; width:100%; margin-bottom:10px" id="account-form" class="form-horizontal">
+                    <p><h2><span id="title"></span></h2></p>
+                    <p><span id="infos1"></span></p>
+                    <p><span id="infos2"></span></p><br/>
+
+                    <div id="account-container">
+                        <div class="form-row">
+                            <i class="icon-tag"></i> <span id="account_new"></span> :
+                            <input type="radio" name="new" id="new_no" value="false" checked onclick="handleClickNew(this);" style="width: 20px; margin-left: 142px; margin-top: -2px">
+                            <label id="account_no" style="width: 40px;" for="new_no"></label>
+                            <input type="radio" name="new" id="new_yes" value="true" onclick="handleClickNew(this);" style="width: 20px; margin-left: 64px; margin-top: -2px">
+                            <label id="account_yes" style="width: 40px;" for="new_yes"></label>
+                        </div>
+                        <div class="form-row">
+                            <label style="width:43%;" for="account-input-email"><i class="icon-tag"></i> <span id="mail"></span></label>
+                            <input style="width:53%;" id="account-input-email" type="text" name="email">
+                        </div>
+                        <div class="form-row">
+                            <label style="width:43%;" for="account-input-pwd"><i class="icon-tag"></i> <span id="password"></span></label>
+                            <input style="width:53%;" id="account-input-pwd" type="password" name="pwd">
+                        </div>
+                        <div class="form-row" id="account-comfirm-password" style="display: none">
+                            <label style="width:43%;" for="account-input-pwd2"><i class="icon-tag"></i> <span id="confirmPassword"> Mot de passe (confirmation)</span></label>
+                            <input style="width:53%;" id="account-input-pwd2" type="password" name="pwd2">
+                        </div>
+                        <div class="form-row">
+                            <label style="width:43%;" for="account-input-tsa_name"><i class="icon-tag"></i> <span id="TSAName"></span></label>
+                            <input style="width:53%;" id="account-input-tsa_name" type="text" name="tsa_name">
+                        </div>
+                        <input id="account-input-ttb_id" type="hidden" name="id">
+                    </div>
+                </form>
+                <div class="tips" style="float:left; display:none;" >
+                    <b style="color:red;"><span class="i18nWarning">Attention</span></b> :
+                    <span class="tipsNewAdd" style="display:inline;" id="newHostnameTips"></span>
+                    <span style="text-decoration: underline;"><a class="linkNewN" target="_blank" href="http://thethingbox.local">http://<span class="newN">thethingbox</span>.local/</a></span>
+                    <span class="tipsAddUsed" style="display:none;" id="alreadyHostnameUsed"></span>
+                </div>
+                <div id="ttb-account"></div>
+            </div>
+            <div class="validate">
+                <button aria-disabled="false" role="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only btn-previous" style="float:left; min-width:82px;">
+                  <span id="buttonPrevious" class="ui-button-text"></span>
+                </button>
+                <button id="account-submit" type="button" class="btn btn-default false_pwd" style="float:right; min-width:82px;" ><span class="ui-button-text"></span></button>
+                <button type="button" class="btn btn-default btn-later" style="float:right; min-width:82px; margin-right:16px;" ><span class="ui-button-text"></span></button>
+            </div>
+        </div>
+        <div id="page2NotConnected" style="min-width: 720px" class="hide">
+            <div style="float:left; margin-top:0px; margin-left:calc(50% - 377px - 70px);"><img style="width:70px" src="/cgu/45-left-crop.jpg"/></div>
+            <div style="float:right; margin-top:0px; margin-right:calc(50% - 377px - 70px);"><img style="width:70px" src="/cgu/45-right-crop.jpg"/></div>
+            <div id="changeName" class="setting-edit-container" style="border:1px solid #aaa;padding:16px">
+                <form id="name-form" style="float:left; width:100%; margin-bottom:10px" class="form-horizontal">
+                    <p><span id="infos1NotConnected"></span></p><br/>
+                    <div id="name-container">
+                        <div class="form-row">
+                            <label style="width:43%;" for="account-input-tsa_name2"><i class="icon-tag"></i> <span id="TSANameNotConnected"></span></label>
+                            <input style="width:53%;" id="account-input-tsa_name2" type="text" name="tsa_name">
+                        </div>
+                    </div>
+                </form>
+                <div class="tips" style="float:left; display:none;" >
+                    <b style="color:red;"><span class="i18nWarning"></span></b> :
+                    <span id="newHostnameTipsNotConnected" class="tipsNewAdd" style="display:inline;"></span>
+                    <span style="text-decoration: underline;"><a class="linkNewN" target="_blank" href="http://thethingbox.local">http://<span class="newN">thethingbox</span>.local/</a></span>
+                    <span id="alreadyHostnameUsedNotConnected" class="tipsAddUsed" style="display:none;"></span>
+                </div>
+            </div>
+            <div class="validate">
+                <button aria-disabled="false" role="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only btn-previous" style="float:left; min-width:82px;">
+                  <span id="buttonPreviousNotConnected" class="ui-button-text"></span>
+                </button>
+                <button id="name-submit" type="button" class="btn btn-default false_pwd" style="float:right; min-width:82px;" ><span class="ui-button-text"></span></button>
+                <button type="button" class="btn btn-default btn-later" style="float:right; min-width:82px; margin-right:16px;" ></button>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var mailDoesntCorresponding = "";
+        var nameAlreadyUsedOnThisAccount = "";
+        var configWillBeUsed = "";
+        var youWillBeRedirected = "";
+
+        var h = $("#createAccount").height()
+        var h2 = h + 46
+
+        var rebooting = false;
+        var scanAvahi = [];
+        var connected;
+
+        function changeButtonState(mode, defaulText){
+            var modeKnown = ['enable', 'disable']
+            var disabled = false;
+            if(!mode || modeKnown.indexOf(mode) === -1){ mode = modeKnown[0] }
+            if(mode === modeKnown[0]){ // enable
+                if(!defaulText){
+                    defaulText = RED._("cgu.submit", { defaultValue: "Submit" })
+                }
+            } else if(mode === modeKnown[1]){ // disable
+                disabled = true
+                if(!defaulText){
+                    defaulText = '<img src="/red/images/spin.svg" />'
+                }
+            }
+            var btnLength = $(".false_pwd").children('.ui-button-text').length
+            for(var i=0; i< btnLength; i++){
+              $(".false_pwd").children('.ui-button-text')[i].innerHTML = defaulText;
+            }
+            $(".false_pwd").button({disabled: disabled});
+        }
+
+        function changeButtonLaterState(mode, defaulText){
+            var modeKnown = ['enable', 'disable']
+            var disabled = false;
+            if(!mode || modeKnown.indexOf(mode) === -1){ mode = modeKnown[0] }
+            if(mode === modeKnown[0]){ // enable
+                if(!defaulText){
+                    defaulText = RED._("cgu.later", { defaultValue: "Later" })
+                }
+            } else if(mode === modeKnown[1]){ // disable
+                disabled = true
+                if(!defaulText){
+                    defaulText = '<img src="/red/images/spin.svg" />'
+                }
+            }
+
+            var btnLength = $(".btn-later").children('.ui-button-text').length
+            for(var i=0; i< btnLength; i++){
+              $(".btn-later").children('.ui-button-text')[i].innerHTML = defaulText;
+            }
+            $(".btn-later").button({disabled: disabled});
+        }
+
+        function handleClickNew(radio){
+            tryToEnableValidation(true);
+            if(radio.value === 'true'){
+                $("#account-comfirm-password").show()
+                $("#createAccount").height(h2)
+            } else {
+                $("#account-comfirm-password").hide()
+                $("#createAccount").height(h)
+            }
+        }
+
+        function setupIsOk(){
+            var mail = $("#account-input-email").val().trim();
+            var pwd  = $("#account-input-pwd").val();
+            var pwd2 = $("#account-input-pwd2").val();
+            var name = $("#account-input-tsa_name").val().trim();
+            var isNewAccount = $('input[name=new]:checked', '#account-form').val()
+            var mailRegex = mail.match(/(^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$)/);
+            var hostnameRegex = name.match(/(^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|-){0,61}[0-9A-Za-z])?)*\.?$)/);
+            var retVal = true;
+
+            // check if email is correct
+            if (mail == ""){
+                retVal = false;
+            } else if(mailRegex == null || mailRegex.length == 0){
+                $("#account-input-email").attr('style','width:53%;border-color:#ED143D;');
+                retVal = false;
+            } else{
+                $("#account-input-email").attr('style','width:53%;');
+            }
+
+
+
+            // check if pasword is correct
+            if (!pwd || pwd.trim() === ""){
+                retVal = false;
+            } else if (pwd !== pwd2 && isNewAccount === "true"){
+                $("#account-input-pwd2").attr('style','width:53%;border-color:#ED143D;');
+                retVal = false;
+            } else {
+                $("#account-input-pwd2").attr('style','width:53%;');
+            }
+
+
+            // check if hostname is correct
+            if(!name || name === ""){
+                retVal = false;
+            } else if (hostnameRegex == null || hostnameRegex.length == 0 || name.toLowerCase() === "thethingbox" || scanAvahi.hasOwnProperty(name.toLowerCase()+".local")) {
+                $("#account-input-tsa_name").attr('style','width:53%;border-color:#ED143D;');
+                retVal = false;
+            } else {
+                $("#account-input-tsa_name").attr('style','width:53%;');
+            }
+
+
+            return retVal;
+        }
+
+        function setupIsOkWithoutConnection(){
+            var name = $("#account-input-tsa_name2").val().trim();
+            var hostnameRegex = name.match(/(^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|-){0,61}[0-9A-Za-z])?)*\.?$)/);
+            var retVal = true;
+
+            // check if hostname is correct
+            if(!name || name === ""){
+                retVal = false;
+            } else if (hostnameRegex == null || hostnameRegex.length == 0 || name.toLowerCase() === "thethingbox" || scanAvahi.hasOwnProperty(name.toLowerCase()+".local")) {
+                $("#account-input-tsa_name2").attr('style','width:53%;border-color:#ED143D;');
+                retVal = false;
+            } else {
+                $("#account-input-tsa_name2").attr('style','width:53%;');
+            }
+
+            return retVal;
+        }
+
+        function tryToEnableValidation(co){
+            var isOk;
+            if (co){
+                isOk = setupIsOk();
+            } else {
+                isOk = setupIsOkWithoutConnection();
+            }
+            if(!isOk || rebooting){
+                changeButtonState('disable', RED._("cgu.submit", { defaultValue: "Submit" }))
+            }
+            else{
+                changeButtonState()
+            }
+        }
+
+        function init(){
+            $("#page2").hide();
+            $("#page2NotConnected").hide();
+            $('#CGUAccepted').prop('checked', false);
+
+            $("#buttonNext").button({ disabled: true });
+            $("#CGUAccepted").change(function() {
+                if ($(this).is(':checked')){
+                    $("#buttonNext").button({ disabled: false });
+                } else {
+                    $("#buttonNext").button({ disabled: true });
+                }
+            });
+            $("#buttonNext").click(function(){
+                $("#page1").hide();
+                var fl = {
+                    CGUReaded: true,
+                    AccountCreated: false,
+                    AccountLater: false
+                }
+                setFlags(fl, function(){
+                    $('#CGUAccepted').prop('checked', true);
+                    $("#CGUAccepted").attr('disabled', true);
+                    $("#buttonNext").button({ disabled: false });
+                    tryToEnableValidation(connected)
+                    if (connected){
+                        $("#page2").fadeIn('slow');
+                    } else {
+                        $("#page2NotConnected").fadeIn('slow');
+                    }
+                })
+            });
+            $(".btn-previous").click(function(){
+                $("#page2").hide();
+                $("#page2NotConnected").hide();
+                $("#page1").fadeIn('slow');
+            });
+
+            changeButtonState('disable', RED._("cgu.submit", { defaultValue: "Submit" }))
+            changeButtonLaterState('disable', RED._("cgu.submit", { defaultValue: "Later" }))
+            changeButtonLaterState()
+            $("#tips").hide();
+
+            function changeForFlagsAndConnect(readed){
+                if(readed == "true") {
+                    $('#CGUAccepted').prop('checked', true);
+                    $("#CGUAccepted").attr('disabled', true);
+                    $("#buttonNext").button({ disabled: false });
+                    $("#page1").hide();
+                    tryToEnableValidation(connected)
+                    if (connected){
+                        $("#page2NotConnected").hide();
+                        $("#page2").show();
+                    } else {
+                        $("#page2").hide();
+                        $("#page2NotConnected").show();
+                    }
+                }
+            }
+
+            function redirect(url){
+                var ua        = navigator.userAgent.toLowerCase(),
+                    isIE      = ua.indexOf('msie') !== -1,
+                    version   = parseInt(ua.substr(4, 2), 10);
+
+                // Internet Explorer 8 and lower
+                if (isIE && version < 9) {
+                    var link = document.createElement('a');
+                    link.href = url;
+                    document.body.appendChild(link);
+                    link.click();
+                }
+
+                // All other browsers
+                else { window.location.href = url; }
+            }
+
+            function refreshWhenReboot(newAddr){
+                $.ajax({
+                    url: newAddr + "keepalive?url="+newAddr,
+                    type: 'GET',
+                    success : function(code_html, statut){
+                        redirect(newAddr);
+                    },
+                    error : function(result, statut, error){
+                        setTimeout(refreshWhenReboot(newAddr),2000);
+                    }
+                });
+            }
+
+            $("#account-container").ready(function() {
+                cguReaded = false
+                $.ajax({
+                    url : '/cgu-flags',
+                    type : 'GET',
+                    success : function(data, statut){
+                        try {
+                            data = JSON.parse(data);
+                        }catch(e) {}
+                        cguReaded = data.CGUReaded
+                        $.ajax({
+                            url : '/cgu-connected',
+                            type : 'GET',
+                            timeout: 7000,
+                            success : function(data, statut){
+                                if (data === "true"){
+                                    connected = true;
+                                } else {
+                                    connected = false;
+                                }
+                                changeForFlagsAndConnect(cguReaded);
+                            },
+                            error: function(){
+                                connected = false;
+                                changeForFlagsAndConnect(cguReaded);
+                            }
+                        });
+                    }
+                });
+                $.ajax({
+                    url : '/cgu-id',
+                    type : 'GET',
+                    dataType : 'html',
+                    success : function(data, statut){
+                        $("#account-input-ttb_id").val(data);
+                    }
+                });
+                $.ajax({
+                    url : '/avahi/scan',
+                    type : 'GET',
+                    success : function(data, statut){
+                        try {
+                            data = JSON.parse(data);
+                        }catch(e) {}
+                        scanAvahi = data;
+                    }
+                });
+            });
+
+            function setFlags(fl, callback){
+                $.post('/cgu-flags', fl, callback, 'text');
+            }
+
+            function setHostname(hostname, callback){
+                $.post('/settings/hostname', {value: hostname}, function(dataReceived){
+                    if(dataReceived.indexOf(hostname) !== -1){
+                        callback(null, dataReceived);
+                    } else {
+                        callback(dataReceived);
+                    }
+                }, 'text');
+            }
+
+            function setAccount(account, callback){
+                $.post('/settings/account/use', account, function(dataReceived){
+                    if(dataReceived.hasOwnProperty('error')){
+                        var mail = $("#account-input-email").val();
+                        var errors = [
+                            "An error occurred setting the account",
+                            "<b>Email</b> must be filled",
+                            "<b>Password</b> must be filled",
+                            "<b>Password</b> and <b>Confirm password</b> must match",
+                            "The account for <b>"+mail+"</b> already exist",
+                            "Bad password for <b>"+mail+"</b>",
+                            "The account <b>"+mail+"</b> is currently bloqued",
+                        ];
+                        callback(errors[dataReceived.error])
+                    } else {
+                        callback(null, "Account linked")
+                    }
+                }, 'json');
+            }
+
+            function setReboot(target){
+                if(rebooting === false){
+                    rebooting = true;
+                    $(`#${RED.notify(youWillBeRedirected, 'success', true).id}`).on('click', function(){this.close()})
+                    $.ajax({
+                        type: "POST",
+                        url: "/reboot"
+                    });
+                    setTimeout(refreshWhenReboot, 10000, target);
+                }
+            }
+
+            $('.btn-later').click(function(event){
+              changeButtonLaterState('disable')
+              changeButtonState('disable', RED._("cgu.submit", { defaultValue: "Submit" }))
+              var fl = {
+                  CGUReaded: true,
+                  AccountCreated: false,
+                  AccountLater: true
+              }
+              setFlags(fl, function(){
+                setTimeout( function(){
+                  redirect(window.location.origin)
+                }, 2000);
+              });
+            })
+
+            $("#account-submit").click(function(event){
+                changeButtonState('disable')
+                changeButtonLaterState('disable', RED._("cgu.submit", { defaultValue: "Later" }))
+                var fl = {
+                    CGUReaded: true,
+                    AccountCreated: true,
+                    AccountLater: false
+                }
+                var tsa_name = $("#account-input-tsa_name").val();
+                var datas = {
+                    mail: $("#account-input-email").val(),
+                    password: $("#account-input-pwd").val(),
+                    confirm_password: $("#account-input-pwd2").val(),
+                    new: $('input[name=new]:checked', '#account-form').val()
+                };
+
+
+                setHostname(tsa_name, function(err, resp){
+                    if(err){
+                        $(`#${RED.notify(err, 'error', true).id}`).on('click', function(){this.close()})
+                        changeButtonState()
+                        changeButtonLaterState()
+                    } else {
+                      $(`#${RED.notify(resp, 'success', true).id}`).on('click', function(){this.close()})
+                      setAccount(datas, function(err, resp){
+                          if(err){
+                            $(`#${RED.notify(err, 'error', true).id}`).on('click', function(){this.close()})
+                            changeButtonState()
+                            changeButtonLaterState()
+                          } else {
+                              setFlags(fl, function(){
+                                  $(`#${RED.notify(resp, 'success', true).id}`).on('click', function(){this.close()})
+                                  setReboot("http://"+ tsa_name +".local/")
+                              });
+                          }
+                      })
+                    }
+                });
+            });
+
+            $("#name-submit").click(function(event){
+                changeButtonState('disable')
+                changeButtonLaterState('disable', RED._("cgu.submit", { defaultValue: "Later" }))
+                var fl = {
+                    CGUReaded: true,
+                    AccountCreated: false,
+                    AccountLater: true
+                }
+                var tsa_name = $("#account-input-tsa_name2").val();
+
+                setFlags(fl, function(){
+                    setHostname(tsa_name, function(err){
+                        if(err){
+                            $(`#${RED.notify(err, 'error', true).id}`).on('click', function(){this.close()})
+                            changeButtonState()
+                            changeButtonLaterState()
+                        } else {
+                            setReboot("http://"+ tsa_name +".local/");
+                        }
+                    });
+                });
+            });
+
+
+            function updateTSAName(value){
+                if(value && value.trim() !== ""){
+                    $(".tips").show();
+                    $(".newN").html(value);
+                    $(".linkNewN").attr("href", "http://"+value+".local");
+                    if (scanAvahi.hasOwnProperty(value+".local")){
+                        $(".tipsNewAdd").css("display","none");
+                        $(".tipsAddUsed").css("display","inline");
+                    }else {
+                        $(".tipsNewAdd").css("display","inline");
+                        $(".tipsAddUsed").css("display","none");
+                    }
+                }
+                else {
+                    $(".tipsNewAdd").css("display","inline");
+                    $(".tipsAddUsed").css("display","none");
+                    $(".tips").hide();
+                }
+            }
+
+            $("#account-input-tsa_name").on("keyup", function() {
+                var value = $("#account-input-tsa_name").val();
+                updateTSAName(value);
+                tryToEnableValidation(true);
+            });
+
+            $("#account-input-tsa_name2").on("keyup", function() {
+                var value = $("#account-input-tsa_name2").val();
+                updateTSAName(value);
+                tryToEnableValidation(false);
+            });
+
+            $("#account-input-tsa_name").on("change", function() {
+                var value = $("#account-input-tsa_name").val();
+                updateTSAName(value);
+                tryToEnableValidation(true);
+            });
+
+            $("#account-input-tsa_name2").on("change", function() {
+                var value = $("#account-input-tsa_name2").val();
+                updateTSAName(value);
+                tryToEnableValidation(false);
+            });
+
+            $("#account-input-email").on("keyup", function() {
+                tryToEnableValidation(true);
+            });
+            $("#account-input-email").on("change", function() {
+                tryToEnableValidation(true);
+            });
+
+            $("#account-input-pwd").on("keyup", function() {
+                tryToEnableValidation(true);
+            });
+            $("#account-input-pwd").on("change", function() {
+                tryToEnableValidation(true);
+            });
+
+            $("#account-input-pwd2").on("keyup", function() {
+                tryToEnableValidation(true);
+            });
+            $("#account-input-pwd2").on("change", function() {
+                tryToEnableValidation(true);
+            });
+        }
+
+        $(document).ready(function(){
+            function waitNLS() {
+                if (RED._("common.label.name") != "") {
+                    $("#cguIFrame").html(RED._("cgu.obsolete", { defaultValue: "Your navigator is obsolete" }));
+                    $('#cguIFrame').prop('src', RED._("cgu.url", { defaultValue: "/cgu/cgu.html" }));
+                    $("#acceptCGU").html(RED._("cgu.acceptCGU", { defaultValue: "I accept the Terms stated above" }));
+                    $("#buttonNext").html(RED._("cgu.next", { defaultValue: "Next" }));
+                    $("#buttonPrevious").html(RED._("cgu.previous", { defaultValue: "Previous" }));
+                    $("#buttonPreviousNotConnected").html(RED._("cgu.previous", { defaultValue: "Previous" }));
+                    $("#title").html(RED._("cgu.title", { defaultValue: "Sign up / Sign in" }));
+                    $("#infos1").html(RED._("cgu.accountWillBeCreated", { defaultValue: "The account will be created if it does not exist" }));
+                    $("#infos1NotConnected").html(RED._("cgu.notConnected", { defaultValue: "Your Thingbox has no access to internet" }));
+                    $("#infos2").html(RED._("cgu.rename", { defaultValue: "You have to rename your Thingbox's name" }));
+                    $("#account_new").html(RED._("settings.account.new", { defaultValue: "Create a new account" }));
+                    $("#account_yes").html(RED._("settings.account.yes", { defaultValue: "Yes" }));
+                    $("#account_no").html(RED._("settings.account.no", { defaultValue: "No" }));
+                    $("#mail").html(RED._("cgu.mail", { defaultValue: "E-mail" }));
+                    $("#password").html(RED._("cgu.password", { defaultValue: "Password" }));
+                    $("#confirmPassword").html(RED._("cgu.confirmPassword", { defaultValue: "Confirm your password" }));
+                    $("#TSAName").html(RED._("cgu.TSAName", { defaultValue: "Your new Thingbox's name" }));
+                    $("#TSANameNotConnected").html(RED._("cgu.TSAName", { defaultValue: "Your new Thingbox's name" }));
+                    $(".i18nWarning").html(RED._("cgu.warning", { defaultValue: "Warning" }));
+                    $("#newHostnameTips").html(RED._("cgu.newHostnameTips", { defaultValue: "the new web address will be" }));
+                    $("#newHostnameTipsNotConnected").html(RED._("cgu.newHostnameTips", { defaultValue: "the new web address will be" }));
+                    $("#alreadyHostnameUsed").html(RED._("cgu.alreadyHostnameUsed", { defaultValue: "is already in use on your network, choose another name" }));
+                    $("#alreadyHostnameUsedNotConnected").html(RED._("cgu.alreadyHostnameUsed", { defaultValue: "is already in use on your network, choose another name" }));
+                    $("#account-submit").children('.ui-button-text')[0].innerHTML = RED._("cgu.submit", { defaultValue: "Submit" });
+                    $("#name-submit").children('.ui-button-text')[0].innerHTML = RED._("cgu.submit", { defaultValue: "Submit" });
+                    var btnLaterLength = $(".btn-later").children('.ui-button-text').length
+                    for(var i=0; i< btnLaterLength; i++){
+                      $(".btn-later").children('.ui-button-text')[i].innerHTML = RED._("cgu.later", { defaultValue: "Later" });
+                    }
+
+
+                    mailDoesntCorresponding = RED._("cgu.mailDoesntCorresponding", { defaultValue: "The password does not correspond with the filled email" });
+                    nameAlreadyUsedOnThisAccount = RED._("cgu.nameAlreadyUsedOnThisAccount", { defaultValue: "This account already has a Thingbox or a TimeSquAir named :" });
+                    configWillBeUsed = RED._("cgu.configWillBeUsed", { defaultValue: "Its configuration will be used." });
+                    youWillBeRedirected = RED._("cgu.youWillBeRedirected", { defaultValue: "You will be redirected automatically once your Thingbox has finished rebooting." });
+
+                    init();
+                }
+                else {
+                    setTimeout(waitNLS, 100);
+                }
+            }
+            waitNLS();
+        });
+    </script>
+</body>
+</html>

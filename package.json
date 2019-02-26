@@ -2,17 +2,20 @@
   "name": "ttb-router",
   "description": "Express route to use for thethingbox",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.1.0",
   "main": "index.js",
-  "routes": [{
+  "routes": [ {
+    "name": "materialize",
+    "file": "routes/materialize.js"
+  }, {
+    "name": "settings_wizard",
+    "file": "routes/settings_wizard.js"
+  }, {
     "name": "portal",
     "file": "routes/portal.js"
   }, {
     "name": "Welcome",
     "file": "routes/welcome.js"
-  }, {
-    "name": "CGU",
-    "file": "routes/cgu.js"
   }, {
     "name": "icon",
     "file": "routes/favicon.js"
@@ -21,11 +24,13 @@
     "file": "routes/red.js"
   }],
   "dependencies": {
-    "mustache": "2.3.0",
     "basic-auth": "2.0.1",
     "bcrypt": "3.0.2",
     "ttbd-exec": "TheThingBox/ttbd-exec#8595423",
-    "ttbd-iwlist": "TheThingBox/ttbd-iwlist#90c1ae6",
-    "ttbd-node-interfaces": "TheThingBox/ttbd-node-interfaces#503428c"
+    "ttb-settings-wizard-view-account": "TheThingBox/ttb-settings-wizard-view-account",
+    "ttb-settings-wizard-view-cgu": "TheThingBox/ttb-settings-wizard-view-cgu",
+    "ttb-settings-wizard-view-name": "TheThingBox/ttb-settings-wizard-view-name",
+    "ttb-settings-wizard-view-wifi": "TheThingBox/ttb-settings-wizard-view-wifi",
+    "ttb-settings-wizard-view-validation": "TheThingBox/ttb-settings-wizard-view-validation"
   }
 }
