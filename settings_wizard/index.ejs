@@ -32,10 +32,6 @@
   </nav>
 </head>
 <body>
-  <% /* %>
-  <ul class="sidenav" id="mobile-demo">
-  </ul>
-  <% */ %>
   <div class="main">
     <% for (var i = 0; i < views.length; i++) { %>
     <div id="wizard_<%= views[i].name %>">
@@ -53,6 +49,7 @@
     </div>
     <% } %>
   </div>
+  <script src="/materialize/CryptoJS/crypto-js.min.js" type="text/javascript"></script> <!-- from https://cdnjs.com/libraries/crypto-js -->
   <script src="/materialize/materialize.min.js" type="text/javascript"></script>
   <script src="/materialize/ejs.min.js" type="text/javascript"></script>
   <script src="/materialize/ejs_file_loader.js" type="text/javascript"></script>

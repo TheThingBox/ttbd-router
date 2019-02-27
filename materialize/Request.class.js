@@ -79,7 +79,6 @@ var Request = function() {
             throw new Error("HTTP error, status = " + response.status);
           }
           var contentType = response.headers.get("content-type");
-          console.log(contentType)
           if(contentType && contentType.indexOf("application/json") !== -1) {
             return response.json()
           } else if (contentType && contentType.indexOf("text/plain") !== -1){

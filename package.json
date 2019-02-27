@@ -4,25 +4,32 @@
   "private": true,
   "version": "0.1.0",
   "main": "index.js",
-  "routes": [ {
-    "name": "materialize",
-    "file": "routes/materialize.js"
-  }, {
-    "name": "settings_wizard",
-    "file": "routes/settings_wizard.js"
-  }, {
-    "name": "portal",
-    "file": "routes/portal.js"
-  }, {
-    "name": "Welcome",
-    "file": "routes/welcome.js"
-  }, {
-    "name": "icon",
-    "file": "routes/favicon.js"
-  }, {
-    "name": "Node-RED",
-    "file": "routes/red.js"
-  }],
+  "routes": [
+    {
+      "name": "materialize",
+      "file": "routes/materialize.js"
+    },
+    {
+      "name": "settings_wizard",
+      "file": "routes/settings_wizard.js"
+    },
+    {
+      "name": "portal",
+      "file": "routes/portal.js"
+    },
+    {
+      "name": "Welcome",
+      "file": "routes/welcome.js"
+    },
+    {
+      "name": "icon",
+      "file": "routes/favicon.js"
+    },
+    {
+      "name": "Node-RED",
+      "file": "routes/red.js"
+    }
+  ],
   "dependencies": {
     "basic-auth": "2.0.1",
     "bcrypt": "3.0.2",
