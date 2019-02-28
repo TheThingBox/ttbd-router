@@ -2,8 +2,7 @@ module.exports = function(app, dir, RED, settings_nodered) {
     const { existsSync, statSync, readdirSync, readFileSync } = require('fs')
     const { join } = require('path')
     const express = require('express');
-    const exec = require('ttbd-exec');
-    const exec_opt = {hydra_exec_host: "mosquitto"}
+    const interface_utils = require('ttbd-interface-utils')({hydra_exec_host: "mosquitto"})
     const getDirectories = source => readdirSync(source).filter(name => statSync(join(source, name)).isDirectory())
     var notOrderedCurrent = 99900
     var persistenceDir = settings_nodered.persistenceDir || settings_nodered.userDir || __dirname;
@@ -117,31 +116,40 @@ module.exports = function(app, dir, RED, settings_nodered) {
     updateViews()
 
     function render_portal(req, res){
-        res.header("Access-Control-Allow-Origin", "*");
-        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-        let lang = req.acceptsLanguages('fr-FR', 'en-US')
-        if( ['fr-FR', 'fr'].indexOf(lang) !== -1){
-          lang = 'fr'
-        } else {
-          lang = 'en'
-        }
-        updateViews()
-        getHostname( (err_hostname, hostname) => {
-          res.render('index', {
-            title: title,
-            device: deviceType,
-            devicePrettyName: prettyName,
-            hostname: (err_hostname)?null:hostname,
-            lang: lang,
-            views: views
-          });
+      res.header("Access-Control-Allow-Origin", "*");
+      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+      let lang = req.acceptsLanguages('fr-FR', 'en-US')
+      if( ['fr-FR', 'fr'].indexOf(lang) !== -1){
+        lang = 'fr'
+      } else {
+        lang = 'en'
+      }
+      updateViews()
+      interface_utils.getHostname().then( hostname =>{
+        res.render('index', {
+          title: title,
+          device: deviceType,
+          devicePrettyName: prettyName,
+          hostname: hostname,
+          lang: lang,
+          views: views
         });
+      }).catch( err => {
+        res.render('index', {
+          title: title,
+          device: deviceType,
+          devicePrettyName: prettyName,
+          hostname: deviceType,
+          lang: lang,
+          views: views
+        });
+      })
     }
 
     app.get("/portal", render_portal);
 
     function redirect_portal(req, res){
-        res.redirect(302, 'http://192.168.61.1/portal');
+      res.redirect(302, 'http://192.168.61.1/portal');
     }
 
     // captive portal detection : windows
@@ -159,7 +167,8 @@ module.exports = function(app, dir, RED, settings_nodered) {
     app.get("/hotspot-detect.html", redirect_portal);
 
     try {
-      viewsApi['wifi'].enableAPOnWlan((settings_nodered.functionGlobalContext.settings.id || "ap").slice(-4))
+      var ssid_id = (settings_nodered.functionGlobalContext.settings.id || "ap").slice(-4)
+      viewsApi['wifi'].enableAPOnWlan(ssid_id)
     } catch(e){}
 
     return true;

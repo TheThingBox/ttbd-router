@@ -33,7 +33,7 @@
   "dependencies": {
     "basic-auth": "2.0.1",
     "bcrypt": "3.0.2",
-    "ttbd-exec": "TheThingBox/ttbd-exec#8595423",
+    "ttbd-interface-utils": "github:TheThingBox/ttbd-interface-utils#323cbd8",
     "ttb-settings-wizard-view-account": "TheThingBox/ttb-settings-wizard-view-account",
     "ttb-settings-wizard-view-cgu": "TheThingBox/ttb-settings-wizard-view-cgu",
     "ttb-settings-wizard-view-name": "TheThingBox/ttb-settings-wizard-view-name",

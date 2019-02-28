@@ -2,8 +2,7 @@ module.exports = function(app, dir, RED, settings_nodered) {
   const { existsSync, statSync, readdirSync, readFileSync } = require('fs')
   const { join } = require('path')
   const express = require('express');
-  const exec = require('ttbd-exec');
-  const exec_opt = {hydra_exec_host: "mosquitto"}
+  const interface_utils = require('ttbd-interface-utils')({hydra_exec_host: "mosquitto"})
   const getDirectories = source => readdirSync(source).filter(name => statSync(join(source, name)).isDirectory())
   var notOrderedCurrent = 99900
   var persistenceDir = settings_nodered.persistenceDir || settings_nodered.userDir || __dirname;
@@ -26,20 +25,6 @@ module.exports = function(app, dir, RED, settings_nodered) {
 
   app.set('views', wizardViewPath);
   app.set('view engine', 'ejs');
-
-  function getHostname(callback){
-    exec('cat /etc/hostname', exec_opt, function(err, stdout, stderr){
-      if(err){
-        console.log('hostname');
-        console.log(err);
-        console.log(stdout);
-        console.log(stderr);
-      }
-      if(typeof callback === "function"){
-        callback(err, stdout.replace(/[\r\n\t\f\v]/g, "").trim().replace(/[ ]+/g,"_"));
-      }
-    });
-  }
 
   var title = `${prettyName} : Settings Wizard`
   var viewsApi = {}
@@ -120,16 +105,25 @@ module.exports = function(app, dir, RED, settings_nodered) {
         lang = 'en'
       }
       updateViews()
-      getHostname( (err_hostname, hostname) => {
+      interface_utils.getHostname().then( hostname =>{
         res.render('index', {
           title: title,
           device: deviceType,
           devicePrettyName: prettyName,
-          hostname: (err_hostname)?null:hostname,
+          hostname: hostname,
           lang: lang,
           views: views
         });
-      });
+      }).catch( err => {
+        res.render('index', {
+          title: title,
+          device: deviceType,
+          devicePrettyName: prettyName,
+          hostname: deviceType,
+          lang: lang,
+          views: views
+        });
+      })
   }
 
   app.get("/settings_wizard", render_wizard);
@@ -141,32 +135,38 @@ module.exports = function(app, dir, RED, settings_nodered) {
     res.sendFile(join(wizardViewPath, 'wizard.js'));
   })
 
+  app.post("/settings_wizard/reboot", function(req, res){
+    res.json({ message: 'OK'})
+    setTimeout( () => {
+      interface_utils.rebootDevice()
+    }, 1000)
+  })
 
-  // function isCGUReaded() {
-  //     var sets = fs.readFileSync('/root/persistence/settings.json', 'utf8');
-  //     try {
-  //         sets = JSON.parse(sets);
-  //     } catch (e) {};
-  //
-  //     if ((sets.CGUReaded === "true" || sets.CGUReaded === true) && ((sets.AccountCreated === "true" || sets.AccountCreated === true) || (sets.AccountLater === "true" || sets.AccountLater === true))) {
-  //         return true;
-  //     } else {
-  //         return false;
-  //     }
-  // }
-  //
-  // app.all("/", function(req, res, next) {
-  //     if (settings_nodered.httpNodeRoot != "/" &&
-  //         req.path.indexOf(settings_nodered.httpNodeRoot) == 0 &&
-  //         req.path != settings_nodered.httpNodeRoot + "form/settings") {
-  //         return next();
-  //     } else {
-  //         if (isCGUReaded()) {
-  //             return next();
-  //         } else {
-  //             res.redirect('/cgu');
-  //         }
-  //     }
-  // });
+  app.post("/settings_wizard/restart", function(req, res){
+    res.json({ message: 'OK'})
+    setTimeout( () => {
+      interface_utils.restartNodered()
+    }, 1000)
+  })
 
+  function isCGUReaded() {
+    var readed = true
+    if(viewsApi.hasOwnProperty('cgu')){
+      viewsApi.cgu.syncStats()
+      readed = viewsApi.cgu.getStats().readed
+    }
+    return readed
+  }
+
+  app.all("/", function(req, res, next) {
+    if(settings_nodered.httpNodeRoot != "/" && (req.path.indexOf(`${settings_nodered.httpNodeRoot}settings_wizard/`) == 0 || req.path.indexOf(`${settings_nodered.httpNodeRoot}materialize/`) == 0)) {
+      return next();
+    } else {
+      if(isCGUReaded()) {
+        return next();
+      } else {
+        res.redirect('/settings_wizard');
+      }
+    }
+  })
 }

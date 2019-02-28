@@ -19,9 +19,10 @@ module.exports = function(app, router, folder, RED, settings) {
                         if (res) {
                             RED.log.info("Express route added   : '" + name + "' from " + routePath);
                         } else {
-                            RED.log.error("Cannot load the express route '" + name + "' from " + routePath + " : " + err);
+                            RED.log.error("Cannot load the express route '" + name + "' from " + routePath);
                         }
                     } catch (e) {
+                        //console.log(e)
                         RED.log.error("Cannot load '" + name + "' from " + routePath + " : " + e);
                     }
                 } else {

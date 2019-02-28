@@ -4,7 +4,9 @@ var Request = function() {
         this.url = url
         this.data = ''
         this.isJsonData = false
-        this.setData(data)
+        if(typeof data !== 'undefined'){
+          this.setData(data)
+        }
     }
 
     Request.prototype.setData = function(data) {
@@ -29,6 +31,36 @@ var Request = function() {
         return ((typeof this.data === 'function') || (typeof this.data === 'object'));
     }
 
+    Request.handleResponse = function(response) {
+      var contentType = response.headers.get("content-type");
+      if(contentType && contentType.indexOf("text/") !== -1){
+        return response.text().then((text) => {
+          if (!response.ok) {
+            const error = Object.assign({}, {
+              message: text,
+              status: response.status,
+              statusText: response.statusText,
+            });
+            return Promise.reject(error);
+          }
+          return text;
+        });
+      } else if (contentType && contentType.indexOf("application/json") !== -1) {
+        return response.json().then((json) => {
+          if (!response.ok) {
+            const error = Object.assign({}, json, {
+              status: response.status,
+              statusText: response.statusText,
+            });
+            return Promise.reject(error);
+          }
+          return json;
+        });
+      } else {
+        throw new Error("Unsupported response");
+      }
+    }
+
     Request.prototype.post = function() {
       return new Promise( (resolve, reject) => {
         var _headers = new Headers({'Accept': 'application/json, text/plain, */*', 'Content-Length': this.data.length.toString()})
@@ -40,19 +72,9 @@ var Request = function() {
           body: this.data,
           mode: 'cors',
           headers: _headers
-        }).then(response => {
-            if (!response.ok) {
-              throw new Error("HTTP error, status = " + response.status);
-            }
-            var contentType = response.headers.get("content-type");
-            if(contentType && contentType.indexOf("application/json") !== -1) {
-              return response.json()
-            } else if (contentType && contentType.indexOf("text/plain") !== -1){
-              return response.text()
-            } else {
-              throw new Error("Unsupported response");
-            }
-        }).then( data => {
+        })
+        .then(Request.handleResponse)
+        .then( data => {
           resolve(data)
         }).catch( error => {
           reject(error)

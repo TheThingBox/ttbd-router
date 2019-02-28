@@ -10,6 +10,8 @@
       });
       M.Tooltip.init(tooltip_elems);
 
+      loaded_promises = []
+
       for(var v in params.views){
         if(typeof params.views[v].isOk !== 'function'){
           params.views[v].isOk = function(){
@@ -106,7 +108,23 @@
             })
           }
         }
+
+
+        if(typeof params.views[v].loaded !== 'function'){
+          params.views[v].loaded = function(){ return true }
+        }
+        loaded_promises.push(params.views[v].loaded())
       }
+      Promise.all(loaded_promises).then( datas => {
+        for(var v in params.views){
+          if(params.views[v].isOk()){
+            params.views[v].checkButtonNextStats()
+            goToNextView(params.views[v].order)
+          } else {
+            break
+          }
+        }
+      })
     });
 
     const getNextViewOrder = function(viewOrder){
@@ -177,11 +195,13 @@
       }
     }
 
-    const goToNextView = function(){
-      var currentActive = getActiveViewOrder()
-      if(currentActive){
-        var nextActive = getNextViewOrder(currentActive)
-        if(nextActive && nextActive != currentActive){
+    const goToNextView = function(viewOrder){
+      if(!viewOrder){
+        viewOrder = getActiveViewOrder()
+      }
+      if(viewOrder){
+        var nextActive = getNextViewOrder(viewOrder)
+        if(nextActive && nextActive != viewOrder){
           enableView(nextActive)
           var next_a = document.getElementsByClassName('navtab_'+nextActive);
           if(next_a.length > 0){
