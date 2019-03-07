@@ -9,6 +9,39 @@ var Request = function() {
         }
     }
 
+    Request.prototype.setUrl = function(url) {
+      this.url = url
+    }
+
+    Request.prototype.getUrl = function() {
+      return this.url
+    }
+
+    Request.prototype.getHost = function() {
+      if(this.url.indexOf('/') == 0){
+        return window.location.host
+      }
+      var _host = this.url
+      if(_host.indexOf('http://') == 0){
+        _host = _host.substr(7)
+      } else if(_host.indexOf('https://') == 0){
+        _host = _host.substr(7)
+      }
+      _host = _host.split('/')[0]
+      return _host
+    }
+
+    Request.prototype.isLocalUrl = function() {
+      return this.url.indexOf('/') == 0
+    }
+
+    Request.prototype.getProtocol = function() {
+      if(this.url.indexOf('/') == 0){
+        return window.location.protocol
+      }
+      return `${this.url.split(':')[0]}:`
+    }
+
     Request.prototype.setData = function(data) {
       this.data = data
       if(!data){

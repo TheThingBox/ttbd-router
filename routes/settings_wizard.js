@@ -2,7 +2,8 @@ module.exports = function(app, dir, RED, settings_nodered) {
   const { existsSync, statSync, readdirSync, readFileSync } = require('fs')
   const { join } = require('path')
   const express = require('express');
-  const interface_utils = require('ttbd-interface-utils')({hydra_exec_host: "mosquitto"})
+  const InterfaceUtils = require('ttbd-interface-utils')
+  const interface_utils = new InterfaceUtils({hydra_exec_host: "mosquitto"})
   const getDirectories = source => readdirSync(source).filter(name => statSync(join(source, name)).isDirectory())
   var notOrderedCurrent = 99900
   var persistenceDir = settings_nodered.persistenceDir || settings_nodered.userDir || __dirname;
@@ -29,14 +30,12 @@ module.exports = function(app, dir, RED, settings_nodered) {
   var title = `${prettyName} : Settings Wizard`
   var viewsApi = {}
 
-  const moduleToIgnore = ['ttb-settings-wizard-view-wifi']
-  var views = getDirectories(join(__dirname, '..', 'node_modules')).filter(name => name.indexOf('ttb-settings-wizard-view-') === 0).filter(name => moduleToIgnore.indexOf(name) === -1).map( name => {
+  const moduleToIgnore = ['wifi', 'showall']
+  var views = getDirectories(join(__dirname, '..', 'node_modules')).filter(name => name.indexOf('ttb-settings-wizard-view-') === 0).map( name => {
     let _name = name.substr(25)
     let _dir = join(__dirname, '..', 'node_modules', name)
     let _ejsPath = join(_dir, `${_name}.ejs`)
-    if(existsSync(_ejsPath) !== true){
-      return null
-    }
+
     app.use(`/settings_wizard/${_name}`, express.static(_dir))
 
     let _ejs = `/settings_wizard/${_name}/${_name}.ejs`
@@ -56,6 +55,9 @@ module.exports = function(app, dir, RED, settings_nodered) {
       _order = `${notOrderedCurrent}`
       notOrderedCurrent = notOrderedCurrent+1
     }
+    if(existsSync(_ejsPath) !== true){
+      return null
+    }
     return {
       api: _api,
       name: _name,
@@ -64,7 +66,7 @@ module.exports = function(app, dir, RED, settings_nodered) {
       dir: _dir,
       ejs: _ejs
     }
-  }).filter(e => e).sort( (a, b) => {
+  }).filter(e => e && moduleToIgnore.indexOf(e.name) == -1).sort( (a, b) => {
     if(a.order > b.order){
       return 1;
     }
@@ -128,6 +130,16 @@ module.exports = function(app, dir, RED, settings_nodered) {
 
   app.get("/settings_wizard", render_wizard);
 
+  app.get("/settings_wizard/api", function(req, res){
+    res.json(Object.keys(viewsApi))
+  });
+
+  app.get("/settings_wizard/alive", function(req, res){
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.json({ message: 'OK'})
+  })
+
   app.get("/settings_wizard/css", function(req, res){
     res.sendFile(join(wizardViewPath, 'wizard.css'));
   })
@@ -149,10 +161,16 @@ module.exports = function(app, dir, RED, settings_nodered) {
     }, 1000)
   })
 
+  app.post("/settings_wizard/shutdown", function(req, res){
+    res.json({ message: 'OK'})
+    setTimeout( () => {
+      interface_utils.shutdownDevice()
+    }, 1000)
+  })
+
   function isCGUReaded() {
     var readed = true
     if(viewsApi.hasOwnProperty('cgu')){
-      viewsApi.cgu.syncStats()
       readed = viewsApi.cgu.getStats().readed
     }
     return readed

@@ -2,7 +2,8 @@ module.exports = function(app, dir, RED, settings_nodered) {
     const { existsSync, statSync, readdirSync, readFileSync } = require('fs')
     const { join } = require('path')
     const express = require('express');
-    const interface_utils = require('ttbd-interface-utils')({hydra_exec_host: "mosquitto"})
+    const InterfaceUtils = require('ttbd-interface-utils')
+    const interface_utils = new InterfaceUtils({hydra_exec_host: "mosquitto"})
     const getDirectories = source => readdirSync(source).filter(name => statSync(join(source, name)).isDirectory())
     var notOrderedCurrent = 99900
     var persistenceDir = settings_nodered.persistenceDir || settings_nodered.userDir || __dirname;
