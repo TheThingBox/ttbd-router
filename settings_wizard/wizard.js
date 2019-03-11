@@ -1,446 +1,572 @@
-document.addEventListener('DOMContentLoaded', function() {
-  var nav_elems = document.querySelectorAll('.sidenav');
-  var tab_elems = document.querySelectorAll('.tabs');
-  var collapsible_elems = document.querySelectorAll('.collapsible');
-  var tooltip_elems = document.querySelectorAll('.tooltiped');
-  M.Sidenav.init(nav_elems);
-  M.Tabs.init(tab_elems);
-  M.Collapsible.init(collapsible_elems, {
-    accordion: false
-  });
-  M.Tooltip.init(tooltip_elems);
-
-  loaded_promises = []
-
-  for(var v in params.views){
-    if(typeof params.views[v].isOk !== 'function'){
-      params.views[v].isOk = function(){
-        return true
-      }
-    }
-    if(typeof params.views[v].enabled !== 'function'){
-      params.views[v].enabled = function(){
-        var _index = params.views.findIndex(_e => _e.name === this.name)
-        if(params.views[_index].isOk() === true){
-          enableNextView(params.views[_index].order)
-        }
-      }
-    }
-    if(typeof params.views[v].checkButtonNextStats !== 'function'){
-      params.views[v].checkButtonNextStats = function(){
-        var _index = params.views.findIndex(_e => _e.name === this.name)
-        var _nextDiv = document.getElementById(`wizard_${params.views[_index].name}_form_next`)
-        if(_nextDiv){
-          if(params.views[_index].isOk()){
-            _nextDiv.classList.remove("disabled")
-          } else {
-            _nextDiv.classList.add("disabled")
-            disableNextViews()
-          }
-        }
-      }
-    }
-    if(typeof params.views[v].getResumed !== 'function'){
-      params.views[v].getResumed = function(){
-        if(form_params[this.name].ignore === true){
-          return `The ${this.name} settings will be ignored`
-        }
-        return `The ${this.name} has been set`
-      }
-    }
-
-    var _footer = document.getElementById(`wizard_${params.views[v].name}_footer`)
-    if(_footer){
-      _footer.innerHTML = buildFooter(v)
-      var _nextViewButton = document.getElementById(`wizard_${params.views[v].name}_form_next`)
-      if(_nextViewButton){
-        _nextViewButton.addEventListener("click", function(e){
-          let currentViewIndex = params.views.findIndex(_e => _e.order === getActiveViewOrder())
-          if(currentViewIndex !== -1 && params.views[currentViewIndex].isOk()){
-            goToNextView()
-          }
-        })
-      }
-
-      var _previousViewButton = document.getElementById(`wizard_${params.views[v].name}_form_previous`)
-      if(_previousViewButton){
-        _previousViewButton.addEventListener("click", function(e){
-          goToPreviousView()
-        })
-      }
-
-      var _ignoreViewButton = document.getElementById(`wizard_${params.views[v].name}_form_ignore`)
-      if(_ignoreViewButton){
-        _ignoreViewButton.addEventListener("click", function(e){
-          ignoreView()
-        })
-      }
-
-      var _ignoreWrapperDiv = document.getElementById(`wizard_${params.views[v].name}_ignore_wrapper`)
-      if(_ignoreWrapperDiv){
-        _ignoreWrapperDiv.addEventListener("click", function(e){
-          unIgnoreView()
-        })
-      }
-    }
-
-    var _validateFooter = document.getElementById(`wizard_${params.views[v].name}_validate_footer`)
-    if(_validateFooter){
-      _validateFooter.innerHTML = buildValidateFooter(v)
-      var _validateButton = document.getElementById(`wizard_${params.views[v].name}_form_validate`)
-      if(_validateButton){
-        _validateButton.addEventListener("click", function(e){
-          var _clickedName = this.id.split('_')
-          if(_clickedName.length > 2){
-            _clickedName = _clickedName[1]
-          }
-          var _clickedIndex = params.views.findIndex(v => v.name === _clickedName)
-          if(_clickedIndex !== -1){
-            params.views[_clickedIndex].validate()
-          }
-        })
-      }
-    }
-
-
-    if(typeof params.views[v].loaded !== 'function'){
-      params.views[v].loaded = function(){ return true }
-    }
-    loaded_promises.push(params.views[v].loaded())
+var VIEW = function() {
+  var VIEW = function() {
+    this.type= 'view'
+    this.tab_id = `tab_${this.type}`
+    this.navtab_id = `navtab_${this.type}`
+    this.index = null
+    this.params = {}
+    this.form = {}
   }
-  Promise.all(loaded_promises).then( datas => {
-    for(var v in params.views){
-      if(params.views[v].isOk()){
-        params.views[v].checkButtonNextStats()
-        if(params.views[v].canIgnore === true){
-          ignoreView(params.views[v].order, 0)
-        } else {
-          goToNextView(params.views[v].order)
-        }
+
+  VIEW.prototype.isOk = function() {
+    return true
+  }
+
+  VIEW.prototype.enabled = function() {
+    if(this.type==='view'){ return }
+
+    if(this.params.order && this.isOk() === true){
+      this.enableNextView()
+    }
+  }
+
+  VIEW.prototype.checkButtonNextStats = function() {
+    if(this.type==='view'){ return }
+
+    var _nextDiv = document.getElementById(`wizard_${this.type}_form_next`)
+    if(_nextDiv){
+      if(this.isOk()){
+        _nextDiv.classList.remove("disabled")
       } else {
-        break
+        _nextDiv.classList.add("disabled")
+        this.disableNextViews()
       }
     }
+  }
+
+  VIEW.prototype.getResumed = function() {
+    if(this.type==='view'){ return '' }
+
+    if(this.form.ignore === true){
+      return VIEW.lang('resumed_ignored', { name: this.tab_name })
+    }
+    return VIEW.lang('resumed_ignored', { name: this.tab_name })
+  }
+
+  VIEW.prototype.buildFooter = function() {
+    if(this.type==='view'){ return '' }
+
+    var _footer = document.getElementById(`wizard_${this.type}_footer`)
+    var _validateFooter = document.getElementById(`wizard_${this.type}_validate_footer`)
+
+    var _innerHTML = ''
+    if(_footer){
+      _innerHTML = `
+        <div class="col s12">
+          <div id="wizard_${this.type}_errors" class="row errors_wrapper" style="margin-bottom:0px !important"></div>
+      `
+      if(this.index == 0){
+        _innerHTML = `${_innerHTML}
+          <div class="row">
+            <div class="col m3 hide-on-small-only"></div>
+            <div class="col m3 hide-on-small-only" style="min-width:200px"></div>
+            <div class="col m3 s12" style="min-width:200px">
+              <span>
+                <a style="margin-top:8px;width:100%" class="waves-effect waves-light btn-large disabled ttb-color-light-grey ttb-color-dark-grey-text" id="wizard_${this.type}_form_next"><i class="material-icons right" style="margin-right:-22px !important; margin-left:-22px !important">navigate_next</i>${VIEW.lang('next')}</a>
+              </span>
+            </div>
+            <div class="col m3 hide-on-small-only"></div>
+          </div>
+        `
+      } else {
+        _innerHTML = `${_innerHTML}
+          <div class="row">
+            <div class="col m3 hide-on-small-only"></div>
+            <div class="col m3 s12" style="min-width:200px">
+              <span>
+                <a style="margin-top:8px;width:100%" class="waves-effect waves-light btn-large ttb-color-light-grey ttb-color-dark-grey-text" id="wizard_${this.type}_form_previous"><i class="material-icons left" style="margin-right:-22px !important; margin-left:-22px !important">navigate_before</i>${VIEW.lang('previous')}</a>
+              </span>
+            </div>
+            <div class="col m3 s12" style="min-width:200px">
+              <span>
+                <a style="margin-top:8px;width:100%" class="waves-effect waves-light btn-large ttb-color-light-grey ttb-color-dark-grey-text disabled" id="wizard_${this.type}_form_next"><i class="material-icons right" style="margin-right:-22px !important; margin-left:-22px !important">navigate_next</i>${VIEW.lang('next')}</a>
+              </span>
+            </div>
+            <div class="col m3 hide-on-small-only"></div>
+          </div>
+        `
+      }
+
+      if(this.params.canIgnore){
+        _innerHTML = `${_innerHTML}
+          <div class="row">
+            <div class="col m3 hide-on-small-only"></div>
+            <div class="col m3 hide-on-small-only" style="min-width:200px"></div>
+            <div class="col m3 s12" style="min-width:200px">
+              <span>
+                <a style="width:100%" class="waves-effect btn-large ttb-color-white" id="wizard_${this.type}_form_ignore"><i class="material-icons right" style="margin-right:-22px !important; margin-left:-22px !important">cancel</i>${VIEW.lang('ignore_step')}</a>
+              </span>
+            </div>
+            <div class="col m3 hide-on-small-only"></div>
+          </div>
+        `
+      }
+      _innerHTML = `${_innerHTML}
+        </div>
+      `
+      _footer.innerHTML = _innerHTML
+
+      var _nextViewButton = document.getElementById(`wizard_${this.type}_form_next`)
+      if(_nextViewButton){
+        _nextViewButton.addEventListener("click", (e) => {
+          if(this.isOk()){
+            this.goToNextView()
+          }
+        })
+      }
+
+      var _previousViewButton = document.getElementById(`wizard_${this.type}_form_previous`)
+      if(_previousViewButton){
+        _previousViewButton.addEventListener("click", (e) => {
+          this.goToPreviousView()
+        })
+      }
+
+      var _ignoreViewButton = document.getElementById(`wizard_${this.type}_form_ignore`)
+      if(_ignoreViewButton){
+        _ignoreViewButton.addEventListener("click", (e) => {
+          this.ignoreView()
+        })
+      }
+
+      var _ignoreWrapperDiv = document.getElementById(`wizard_${this.type}_ignore_wrapper`)
+      if(_ignoreWrapperDiv){
+        _ignoreWrapperDiv.addEventListener("click", (e) => {
+          this.unIgnoreView()
+        })
+      }
+    }
+
+    _innerHTML = ''
+    if(_validateFooter){
+      _innerHTML = `
+        <div class="col s12">
+          <div class="row">
+            <div class="col m3 hide-on-small-only"></div>
+            <div class="col m3 hide-on-small-only" style="min-width:200px"></div>
+            <div class="col m3 s12" style="min-width:200px">
+              <span>
+                <a style="margin-top:8px;width:100%;" class="waves-effect waves-light btn-large disabled ttb-color-white" id="wizard_${this.type}_form_validate"><i class="material-icons right" style="margin-right:-16px !important; margin-left:-22px !important; color: #80ff00 !important">send</i>${VIEW.lang('validate')}</a>
+              </span>
+            </div>
+            <div class="col m3 hide-on-small-only"></div>
+          </div>
+        </div>
+      `
+      _validateFooter.innerHTML = _innerHTML
+
+      var _validateButton = document.getElementById(`wizard_${this.type}_form_validate`)
+      if(_validateButton && typeof this.validate === 'function'){
+        _validateButton.addEventListener("click", (e) => {
+          this.validate()
+        })
+      }
+    }
+  }
+
+  VIEW.prototype.getLang = function(lang_key){
+    var _lang_key = lang_key ||  params.lang_key
+    var req = new Request(`settings_wizard/${this.type}/locales/${_lang_key}/${this.type}.json`)
+    return req.get()
+  }
+
+  VIEW.prototype.getView = function(){
+    var req = new Request(this.params.ejs)
+    return req.get()
+  }
+
+  VIEW.prototype.load = function() {
+    return new Promise( (resolve, reject) => {
+      resolve()
+    })
+  }
+
+  VIEW.prototype.loaded = function() {
+    return new Promise( (resolve, reject) => {
+      resolve()
+    })
+  }
+
+  VIEW.prototype.getNextViewIndex = function(){
+    if(this.index === null || this.index+1 === modules.length){
+      return null
+    }
+    return (this.index+1)
+  }
+
+  VIEW.prototype.getPreviousViewIndex = function(){
+    if(this.index === null || this.index < 1){
+      return null
+    }
+    return (this.index-1)
+  }
+
+  VIEW.prototype.goToNextView = function(){
+    var nextActive = this.getNextViewIndex()
+    if(nextActive !== null && nextActive != this.index){
+      VIEW.enableView(nextActive)
+      var next_a = document.getElementById(modules[nextActive].instance.navtab_id);
+      if(next_a){
+        next_a.click()
+      }
+    }
+  }
+
+  VIEW.prototype.goToPreviousView = function(){
+    var previousActive = this.getPreviousViewIndex()
+    if(previousActive !== null && previousActive != this.index){
+      var previous_a = document.getElementById(modules[previousActive].instance.navtab_id);
+      if(previous_a){
+        previous_a.click()
+      }
+    }
+  }
+
+  VIEW.prototype.ignoreView = function(tout = 750){
+    this.form.ignore = true
+    var wrapper = document.getElementById(`wizard_${this.type}_ignore_wrapper`)
+    var _nextViewButton = document.getElementById(`wizard_${this.type}_form_next`)
+    if(_nextViewButton){
+      _nextViewButton.classList.add('disabled')
+    }
+    var _errorDiv = document.getElementById(`wizard_${this.type}_errors`)
+    if(_errorDiv){
+      _errorDiv.classList.remove('is-visible')
+    }
+    if(wrapper){
+      wrapper.classList.add('is-visible');
+      setTimeout(() => { this.goToNextView() }, tout)
+    } else {
+      this.goToNextView()
+    }
+  }
+
+  VIEW.prototype.unIgnoreView = function(){
+    delete this.form.ignore
+    this.checkButtonNextStats()
+    var _ignoreWrapperDiv = document.getElementById(`wizard_${this.type}_ignore_wrapper`)
+    if(_ignoreWrapperDiv){
+      _ignoreWrapperDiv.classList.remove('is-visible')
+    }
+    var _errorDiv = document.getElementById(`wizard_${this.type}_errors`)
+    if(_errorDiv){
+      if(this.form._willShowErrors){
+        clearTimeout(this.form._willShowErrors)
+      }
+      this.form._willShowErrors = setTimeout(() => { this.isOk(true) }, 3000)
+    }
+  }
+
+  VIEW.prototype.showErrors = function(errors = []){
+    if(this.form.ignore === true){
+      return
+    }
+
+    if(!Array.isArray(errors)){
+      errors = [errors]
+    }
+
+    var _errorDiv = document.getElementById(`wizard_${this.type}_errors`)
+    if(_errorDiv){
+      var _innerHTML = ''
+      if(errors.length > 0){
+        _innerHTML = `
+          <div class="col m3 hide-on-small-only"></div>
+          <div class="col m6 s12 errors_container">
+            <ul class="collection with-header">
+              <li class="collection-header"><h4>${VIEW.lang('list_errors', errors.length)}</h4></li>
+        `
+        for(var e in errors){
+          _backgroundColor = ''
+          if(e%2===1){
+            _backgroundColor = 'background-color: #F1F1F1;'
+          }
+          _innerHTML = `${_innerHTML}
+            <li class="collection-item avatar" style="min-height:20px !important;${_backgroundColor}">
+              <i class="material-icons circle ttb-color-purple">priority_high</i>
+              <span class="title">${errors[e].title}</span>
+              <p>${errors[e].corpus}</p>
+            </li>
+          `
+        }
+        _innerHTML = `${_innerHTML}
+            </ul>
+          </div>
+        `
+        _errorDiv.classList.add('is-visible')
+      } else {
+        _errorDiv.classList.remove('is-visible')
+      }
+      _errorDiv.innerHTML = _innerHTML
+    } else if(errors.length > 0) {
+      console.log(errors)
+    }
+  }
+
+  VIEW.prototype.enableView = function(){
+    var done = false
+    var view_li = document.getElementById(this.tab_id);
+    if(view_li){
+      view_li.classList.remove("disabled")
+      this.enabled()
+      done = true
+    }
+    return done
+  }
+
+  VIEW.prototype.enableNextView = function(){
+    var nextView = this.getNextViewIndex()
+    if(nextView){
+      VIEW.enableView(nextView)
+    }
+  }
+
+  VIEW.prototype.disableView = function(){
+    var done = false
+    var view_li = document.getElementById(this.tab_id);
+    if(view_li){
+      if(!view_li.classList.contains('disabled')){
+        view_li.classList.add("disabled")
+        done = true
+      }
+    }
+    return done
+  }
+
+  VIEW.prototype.disableNextViews = function(){
+    var _nextOrder = this.getNextViewIndex()
+    while(_nextOrder !== null){
+      VIEW.disableView(_nextOrder)
+      _nextOrder = VIEW.getNextViewIndex(_nextOrder)
+    }
+  }
+
+  VIEW.getActiveViewIndex = function(){
+    var currentActive = document.getElementsByClassName("navtab active");
+    if(currentActive.length > 0){
+      currentActive = modules.findIndex(m => m.instance.navtab_id == currentActive[0].id)
+      if(currentActive !== -1){
+        return currentActive
+      }
+    }
+    return null
+  }
+
+  VIEW.getNextViewIndex = function(index){
+    if(!index){
+      index = VIEW.getActiveViewIndex()
+    }
+    if(index !== null){
+      return modules[index].instance.getNextViewIndex()
+    }
+    return null
+  }
+
+  VIEW.getPreviousViewIndex = function(index){
+    if(!index){
+      index = VIEW.getActiveViewIndex()
+    }
+    if(index !== null){
+      return modules[index].instance.getPreviousViewIndex()
+    }
+    return null
+  }
+
+  VIEW.goToNextView = function(index){
+    if(!index){
+      index = VIEW.getActiveViewIndex()
+    }
+    if(index !== null){
+      modules[index].instance.goToNextView()
+    }
+  }
+
+  VIEW.goToPreviousView = function(index){
+    if(!index){
+      index = VIEW.getActiveViewIndex()
+    }
+    if(index !== null){
+      modules[index].instance.goToPreviousView()
+    }
+  }
+
+  VIEW.ignoreView = function(index, tout = 750){
+    if(!index){
+      index = VIEW.getActiveViewIndex()
+    }
+    if(index !== null){
+      modules[index].instance.ignoreView(tout)
+    }
+  }
+
+  VIEW.unIgnoreView = function(index){
+    if(!index){
+      index = VIEW.getActiveViewIndex()
+    }
+    if(index !== null){
+      modules[index].instance.unIgnoreView()
+    }
+  }
+
+  VIEW.showErrors = function(index, errors = []){
+    if(!index){
+      index = VIEW.getActiveViewIndex()
+    }
+    if(index !== null){
+      modules[index].instance.showErrors(errors)
+    }
+  }
+
+  VIEW.enableView = function(index){
+    if(!index){
+      index = VIEW.getActiveViewIndex()
+    }
+    if(index !== null){
+      modules[index].instance.enableView()
+    }
+  }
+
+  VIEW.enableNextView = function(index){
+    if(!index){
+      index = VIEW.getActiveViewIndex()
+    }
+    if(index !== null){
+      modules[index].instance.enableNextView()
+    }
+  }
+
+  VIEW.disableView = function(index){
+    if(!index){
+      index = VIEW.getActiveViewIndex()
+    }
+    if(index !== null){
+      modules[index].instance.disableView()
+    }
+  }
+
+  VIEW.disableNextViews = function(index){
+    if(!index){
+      index = VIEW.getActiveViewIndex()
+    }
+    if(index !== null){
+      modules[index].instance.disableNextViews()
+    }
+  }
+
+  return VIEW
+}()
+
+var WIZARD = function() {
+  var WIZARD = function() {
+  }
+
+  WIZARD.aliveApi = '/settings_wizard/alive'
+
+  WIZARD.requestAlive = new Request(WIZARD.aliveApi)
+
+  WIZARD.deviceIsAlive = function(){
+    return new Promise( (resolve, reject) => {
+      WIZARD.requestAlive.get().then( resp => {
+        resolve(true)
+      }).catch( err => {
+        resolve(false)
+      })
+    })
+  }
+
+  WIZARD.waitForDevice = function(tout = 0){
+    return new Promise( (resolve, reject) => {
+      setTimeout( () => {
+        WIZARD.deviceIsAlive().then( (isAlive) => {
+          if(isAlive === false){
+            return WIZARD.waitForDevice(2000)
+          }
+          resolve(true)
+        })
+        .then(() => {
+          resolve(true)
+        })
+        .catch(() => {
+          reject(false)
+        })
+      }, tout)
+    })
+  }
+
+  WIZARD.restartDevice = function(hard){
+    var _req = new Request('/settings_wizard/restart')
+    if(hard === true){
+      _req.setUrl('/settings_wizard/reboot')
+    }
+    _req.post()
+    .then( () => {
+      WIZARD.waitForDevice(5000).then( () => {
+        setTimeout( () => {
+          window.location = `${WIZARD.requestAlive.getProtocol()}//${WIZARD.requestAlive.getHost()}/`
+        }, 3000)
+      })
+    })
+    .catch( err => {})
+  }
+
+  return WIZARD
+}()
+
+document.addEventListener('DOMContentLoaded', function() {
+  var req_lang = new Request(`settings_wizard/locales/${params.lang_key}/settings_wizard.json`)
+  req_lang.get().then( lang =>{
+    try{
+      lang = JSON.parse(lang)
+    } catch(e){}
+    VIEW.lang = i18n.create({ values: lang })
+    var promises = []
+    var loaded_promises = []
+
+    for(var i in modules){
+      modules[i].instance = new (modules[i].module)()
+      promises.push(modules[i].instance.load().then(resp => Object.assign({ success: true, data: resp })).catch(err => Object.assign({ success: false, data: err })))
+    }
+
+    Promise.all(promises).then( datas => {
+      var _done = datas.filter( d => d.success === true)
+      var _fail = datas.filter( d => d.success === false)
+
+      if(_fail.length > 0){
+        console.log(_fail)
+        return
+      }
+
+      var nav_elems = document.querySelectorAll('.sidenav');
+      var tab_elems = document.querySelectorAll('.tabs');
+      var collapsible_elems = document.querySelectorAll('.collapsible');
+      var tooltip_elems = document.querySelectorAll('.tooltiped');
+      M.Sidenav.init(nav_elems);
+      M.Tabs.init(tab_elems);
+      M.Collapsible.init(collapsible_elems, {
+        accordion: false
+      });
+      M.Tooltip.init(tooltip_elems);
+
+      for(var i in modules){
+        modules[i].instance.buildFooter()
+        loaded_promises.push(modules[i].instance.loaded())
+      }
+
+      Promise.all(loaded_promises).then( loaded_datas => {
+        for(var i in modules){
+          if(modules[i].instance.isOk()){
+            modules[i].instance.checkButtonNextStats()
+            if(modules[i].instance.params.canIgnore === true){
+              modules[i].instance.ignoreView(0)
+            } else {
+              modules[i].instance.goToNextView()
+            }
+          } else {
+            break
+          }
+        }
+      })
+    })
   })
 });
 
-const getNextViewOrder = function(viewOrder){
-  var _viewOrder = viewOrder || getActiveViewOrder()
-  let currentViewIndex = params.views.findIndex(v => v.order === _viewOrder)
-  if(currentViewIndex === -1 || (currentViewIndex+1) === params.views.length){
-    return null
-  }
-  return params.views[currentViewIndex+1].order
-}
-
-const getPreviousViewOrder = function(viewOrder){
-  var _viewOrder = viewOrder || getActiveViewOrder()
-  let currentViewIndex = params.views.findIndex(v => v.order === _viewOrder)
-  if(currentViewIndex < 1 ){
-    return null
-  }
-  return params.views[currentViewIndex-1].order
-}
-
-const getActiveViewOrder = function(){
-  var currentActive = document.getElementsByClassName("navtab active");
-  if(currentActive.length > 0){
-    currentActive = currentActive[0].classList.toString().split(' ').filter(e => e.indexOf('navtab_') === 0).map(e => e.substr(7))
-    if(currentActive.length > 0){
-      return currentActive[0]
-    }
-  }
-  return null
-}
-
-const enableView = function(viewOrder){
-  var view_li = document.getElementsByClassName('tab_'+viewOrder);
-  if(view_li.length > 0){
-    view_li[0].classList.remove("disabled")
-    let viewIndex = params.views.findIndex(v => v.order === viewOrder)
-    if(viewIndex !== -1 && params.views[viewIndex].enabled){
-      params.views[viewIndex].enabled()
-    }
-  }
-}
-
-const enableNextView = function(viewOrder){
-  var nextViewOrder = getNextViewOrder(viewOrder)
-  if(nextViewOrder){
-    enableView(nextViewOrder)
-  }
-}
-
-const disableView = function(viewOrder){
-  var done = false
-  var view_li = document.getElementsByClassName('tab_'+viewOrder);
-  if(view_li.length > 0){
-    if(!view_li[0].classList.contains('disabled')){
-      view_li[0].classList.add("disabled")
-      done = true
-    }
-  }
-
-  return done
-}
-
-const disableNextViews = function(viewOrder){
-  var _nextOrder = getNextViewOrder(viewOrder)
-  while(_nextOrder !== null){
-    disableView(_nextOrder)
-    _nextOrder = getNextViewOrder(_nextOrder)
-  }
-}
-
-const goToNextView = function(viewOrder){
-  if(!viewOrder){
-    viewOrder = getActiveViewOrder()
-  }
-  if(viewOrder){
-    var nextActive = getNextViewOrder(viewOrder)
-    if(nextActive && nextActive != viewOrder){
-      enableView(nextActive)
-      var next_a = document.getElementsByClassName('navtab_'+nextActive);
-      if(next_a.length > 0){
-        next_a[0].click()
-      }
-    }
-  }
-}
-
-const goToPreviousView = function(){
-  var currentActive = getActiveViewOrder()
-  if(currentActive){
-    var previousActive = getPreviousViewOrder(currentActive)
-    if(previousActive && previousActive != currentActive){
-      var previous_a = document.getElementsByClassName('navtab_'+previousActive);
-      if(previous_a.length > 0){
-        previous_a[0].click()
-      }
-    }
-  }
-}
-
-const ignoreView = function(viewOrder, tout = 750){
-  var _viewOrder = viewOrder || getActiveViewOrder()
-  var _viewIndex = params.views.findIndex(v => v.order === _viewOrder)
-  if(_viewIndex == -1 || params.views[_viewIndex].canIgnore === false){
-    return
-  }
-  form_params[params.views[_viewIndex].name].ignore = true
-  var wrapper = document.getElementById(`wizard_${params.views[_viewIndex].name}_ignore_wrapper`)
-  var _nextViewButton = document.getElementById(`wizard_${params.views[_viewIndex].name}_form_next`)
-  if(_nextViewButton){
-    _nextViewButton.classList.add('disabled')
-  }
-  var _errorDiv = document.getElementById(`wizard_${params.views[_viewIndex].name}_errors`)
-  if(_errorDiv){
-    _errorDiv.classList.remove('is-visible')
-  }
-  if(wrapper){
-    wrapper.classList.add('is-visible');
-    setTimeout(goToNextView, tout, _viewOrder)
-  } else {
-    goToNextView(_viewOrder)
-  }
-}
-
-const unIgnoreView = function(viewOrder){
-  var _viewOrder = viewOrder || getActiveViewOrder()
-  var _viewIndex = params.views.findIndex(v => v.order === _viewOrder)
-  if(_viewIndex == -1){
-    return
-  }
-  delete form_params[params.views[_viewIndex].name].ignore
-  params.views[_viewIndex].checkButtonNextStats()
-  var _ignoreWrapperDiv = document.getElementById(`wizard_${params.views[_viewIndex].name}_ignore_wrapper`)
-  if(_ignoreWrapperDiv){
-    _ignoreWrapperDiv.classList.remove('is-visible')
-  }
-  var _errorDiv = document.getElementById(`wizard_${params.views[_viewIndex].name}_errors`)
-  if(_errorDiv){
-    if(form_params[params.views[_viewIndex].name]._willShowErrors){
-      clearTimeout(form_params[params.views[_viewIndex].name]._willShowErrors)
-    }
-    form_params[params.views[_viewIndex].name]._willShowErrors = setTimeout(() => { params.views[_viewIndex].isOk(true) }, 3000)
-  }
-}
-
-const validateEmail = function(email) {
-  var re = /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
-  return re.test(email);
-}
-
-const showErrors = function(errors, viewOrder){
-  var _viewOrder = viewOrder || getActiveViewOrder()
-  var _viewIndex = params.views.findIndex(v => v.order === _viewOrder)
-  if(form_params[params.views[_viewIndex].name].ignore){
-    return
-  }
-
-  if(!Array.isArray(errors)){
-    errors = [errors]
-  }
-
-  var _errorDiv = document.getElementById(`wizard_${params.views[_viewIndex].name}_errors`)
-  if(_errorDiv){
-    var _innerHTML = ''
-    if(errors.length > 0){
-      _innerHTML = `<div class="col m3 hide-on-small-only"></div>
-<div class="col m6 s12 errors_container">
-<ul class="collection with-header">
-<li class="collection-header"><h4>List of error${(errors.length>1)?'s':''}</h4></li>
-`
-      for(var e in errors){
-        _backgroundColor = ''
-        if(e%2===1){
-          _backgroundColor = 'background-color: #F1F1F1;'
-        }
-        _innerHTML = `${_innerHTML}
-<li class="collection-item avatar" style="min-height:20px !important;${_backgroundColor}">
-  <i class="material-icons circle ttb-color-purple">priority_high</i>
-  <span class="title">${errors[e].title}</span>
-  <p>${errors[e].corpus}</p>
-</li>
-`
-      }
-      _innerHTML = `${_innerHTML}
-</ul>
-</div>
-`
-      _errorDiv.classList.add('is-visible')
-    } else {
-      _errorDiv.classList.remove('is-visible')
-    }
-    _errorDiv.innerHTML = _innerHTML
-  } else if(errors.length > 0) {
-    console.log(errors)
-  }
-}
-
-const buildFooter = function(index){
-  var _innerHTML = '<div class="col s12">'
-  _innerHTML = `${_innerHTML}
-<div id="wizard_${params.views[index].name}_errors" class="row errors_wrapper" style="margin-bottom:0px !important">
-</div>
-`
-
-  if(index == 0){
-    _innerHTML = `${_innerHTML}
-<div class="row">
-  <div class="col m3 hide-on-small-only"></div>
-  <div class="col m3 hide-on-small-only" style="min-width:200px"></div>
-  <div class="col m3 s12" style="min-width:200px">
-    <span>
-      <a style="margin-top:8px;width:100%" class="waves-effect waves-light btn-large disabled ttb-color-light-grey  ttb-color-dark-grey-text" id="wizard_${params.views[index].name}_form_next"><i class="material-icons right" style="margin-right:-22px !important; margin-left:-22px !important">navigate_next</i>Next</a>
-    </span>
-  </div>
-  <div class="col m3 hide-on-small-only"></div>
-</div>
-`
-  } else {
-    _innerHTML = `${_innerHTML}
-<div class="row">
-  <div class="col m3 hide-on-small-only"></div>
-  <div class="col m3 s12" style="min-width:200px">
-    <span>
-      <a style="margin-top:8px;width:100%" class="waves-effect waves-light btn-large ttb-color-light-grey ttb-color-dark-grey-text" id="wizard_${params.views[index].name}_form_previous"><i class="material-icons left" style="margin-right:-22px !important; margin-left:-22px !important">navigate_before</i>Previous</a>
-    </span>
-  </div>
-  <div class="col m3 s12" style="min-width:200px">
-    <span>
-      <a style="margin-top:8px;width:100%" class="waves-effect waves-light btn-large ttb-color-light-grey ttb-color-dark-grey-text disabled" id="wizard_${params.views[index].name}_form_next"><i class="material-icons right" style="margin-right:-22px !important; margin-left:-22px !important">navigate_next</i>Next</a>
-    </span>
-  </div>
-  <div class="col m3 hide-on-small-only"></div>
-</div>
-`
-  }
-
-  if(params.views[index].canIgnore){
-    _innerHTML = `${_innerHTML}
-<div class="row">
-  <div class="col m3 hide-on-small-only"></div>
-  <div class="col m3 hide-on-small-only" style="min-width:200px"></div>
-  <div class="col m3 s12" style="min-width:200px">
-    <span>
-      <a style="width:100%" class="waves-effect btn-large ttb-color-white" id="wizard_${params.views[index].name}_form_ignore"><i class="material-icons right" style="margin-right:-22px !important; margin-left:-22px !important">cancel</i>Ignore this step</a>
-    </span>
-  </div>
-  <div class="col m3 hide-on-small-only"></div>
-</div>
-`
-  }
-  _innerHTML = `${_innerHTML}
-</div>`
-  return _innerHTML
-}
-
-const buildValidateFooter = function(index){
-    var _innerHTML = '<div class="col s12">'
-
-    _innerHTML = `${_innerHTML}
-<div class="row">
-  <div class="col m3 hide-on-small-only"></div>
-  <div class="col m3 hide-on-small-only" style="min-width:200px"></div>
-  <div class="col m3 s12" style="min-width:200px">
-    <span>
-      <a style="margin-top:8px;width:100%;" class="waves-effect waves-light btn-large disabled ttb-color-white" id="wizard_${params.views[index].name}_form_validate"><i class="material-icons right" style="margin-right:-16px !important; margin-left:-22px !important; color: #80ff00 !important">send</i>Validate</a>
-    </span>
-  </div>
-  <div class="col m3 hide-on-small-only"></div>
-</div>
-`
-    _innerHTML = `${_innerHTML}
-    </div>`
-    return _innerHTML
-}
-
-const settingsWizardAliveApi = '/settings_wizard/alive'
-
-const requestAlive = new Request(settingsWizardAliveApi)
-
-const ttbIsAlive = function(){
-  return new Promise( (resolve, reject) => {
-    requestAlive.get().then( resp => {
-      resolve(true)
-    }).catch( err => {
-      resolve(false)
-    })
-  })
-}
-
-const waitTtbIsAlive = function(tout = 0){
-  return new Promise( (resolve, reject) => {
-    setTimeout( () => {
-      ttbIsAlive().then( (isAlive) => {
-        if(isAlive === false){
-          return waitTtbIsAlive(2000)
-        }
-        resolve(true)
-      })
-      .then(() => {
-        resolve(true)
-      })
-      .catch(() => {
-        reject(false)
-      })
-    }, tout)
-  })
-}
-
-const restart = function(hard){
-  var _req = new Request('/settings_wizard/restart')
-  if(hard === true){
-    _req.setUrl('/settings_wizard/reboot')
-  }
-  _req.post()
-  .then( () => {
-    waitTtbIsAlive(5000).then( () => {
-      setTimeout( () => {
-        window.location = `${requestAlive.getProtocol()}//${requestAlive.getHost()}/`
-      }, 3000)
-    })
-  })
-  .catch( err => {})
-}

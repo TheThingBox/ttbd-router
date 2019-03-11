@@ -89,6 +89,30 @@ var Request = function() {
           }
           return json;
         });
+      } else if (contentType && contentType.indexOf("image/") !== -1){
+        return response.blob().then(blob => {
+          if (!response.ok) {
+            const error = {
+              blob: blob,
+              status: response.status,
+              statusText: response.statusText,
+            };
+            return Promise.reject(error);
+          }
+          return URL.createObjectURL(blob)
+        })
+      } else if (contentType && contentType.indexOf("application/octet-stream") !== -1){
+        return response.text().then((text) => {
+          if (!response.ok) {
+            const error = Object.assign({}, {
+              message: text,
+              status: response.status,
+              statusText: response.statusText,
+            });
+            return Promise.reject(error);
+          }
+          return text;
+        })
       } else {
         throw new Error("Unsupported response");
       }
@@ -129,23 +153,9 @@ var Request = function() {
           method: 'GET',
           mode: 'cors',
           headers: _headers
-        }).then(response => {
-          if (!response.ok) {
-            throw new Error("HTTP error, status = " + response.status);
-          }
-          var contentType = response.headers.get("content-type");
-          if(contentType && contentType.indexOf("application/json") !== -1) {
-            return response.json()
-          } else if (contentType && contentType.indexOf("text/plain") !== -1){
-            return response.text()
-          } else if (contentType && contentType.indexOf("image/") !== -1){
-            return response.blob().then(blob => {
-              return URL.createObjectURL(blob)
-            })
-          } else {
-            throw new Error("Unsupported response");
-          }
-        }).then(data => {
+        })
+        .then(Request.handleResponse)
+        .then(data => {
           resolve(data)
         }).catch( error => {
           reject(error)

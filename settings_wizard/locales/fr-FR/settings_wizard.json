@@ -1,0 +1,13 @@
+{
+  "title": "%{name} : Assistant de configuration",
+  "menu": "menu",
+  "no_settings_tab": "Aucun paramétrage",
+  "no_settings_content": "Oups, il semble qu'il n'y ait aucun paramétrage possible, s'il vous plait contactez le support :",
+  "next": "Suivant",
+  "previous": "Précédent",
+  "validate": "Valider",
+  "ignore_step": "Ignorer",
+  "resumed_ignored": "Les paramètres de la page %{name} vont être ignorés.",
+  "resumed_set": "Les paramètres de la page %{name} vont être appliqués.",
+  "list_errors": [[0, 0, "Pas d'erreur"], [1, 1, "Erreur"], [0, null, "Liste des erreurs"]]
+}

@@ -1,0 +1,13 @@
+{
+  "title": "%{name} : Settings Wizard",
+  "menu": "menu",
+  "no_settings_tab": "no settings",
+  "no_settings_content": "Oups, it seems there are no settings available, please contact the support :",
+  "next": "Next",
+  "previous": "Previous",
+  "validate": "Validate",
+  "ignore_step": "Ignore this step",
+  "resumed_ignored": "The %{name} settings will be ignored.",
+  "resumed_set": "The %{name} settings will be set.",
+  "list_errors": [[0, 0, "No error"], [1, 1, "Error"], [0, null, "List of errors"]]
+}

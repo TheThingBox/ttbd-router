@@ -33,3 +33,8 @@ function isObject(val) {
     if (val === null) { return false; }
     return ((typeof val === 'function') || (typeof val === 'object'));
 }
+
+function validateEmail(email) {
+  var re = /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+  return re.test(email);
+}

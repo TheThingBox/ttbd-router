@@ -5,9 +5,11 @@ module.exports = function(app, dir, RED, settings_nodered) {
     const InterfaceUtils = require('ttbd-interface-utils')
     const interface_utils = new InterfaceUtils({hydra_exec_host: "mosquitto"})
     const getDirectories = source => readdirSync(source).filter(name => statSync(join(source, name)).isDirectory())
+    const i18n = require('../materialize/i18n.min.js')
     var notOrderedCurrent = 99900
     var persistenceDir = settings_nodered.persistenceDir || settings_nodered.userDir || __dirname;
     var wizardViewPath = join(__dirname, '..', 'settings_wizard');
+    var langs = {}
 
     var bodyParser = require('body-parser');
 
@@ -119,29 +121,37 @@ module.exports = function(app, dir, RED, settings_nodered) {
     function render_portal(req, res){
       res.header("Access-Control-Allow-Origin", "*");
       res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-      let lang = req.acceptsLanguages('fr-FR', 'en-US')
-      if( ['fr-FR', 'fr'].indexOf(lang) !== -1){
-        lang = 'fr'
+      let lang_key = req.acceptsLanguages('fr-FR', 'en-US')
+      if( ['fr-FR', 'fr'].indexOf(lang_key) !== -1){
+        lang_key = 'fr-FR'
       } else {
-        lang = 'en'
+        lang_key = 'en-US'
+      }
+      if(!langs.hasOwnProperty(lang_key)){
+        let lang = readFileSync(join(wizardViewPath, 'locales', lang_key, 'settings_wizard.json'))
+        try{
+          lang = JSON.parse(lang)
+        } catch(e){
+          lang = {}
+        }
+        langs[lang_key] = i18n.create({ values: lang })
       }
       updateViews()
-      interface_utils.getHostname().then( hostname =>{
+
+      new Promise( (resolve, reject) => {
+        interface_utils.getHostname().then( hostname =>{
+          resolve(hostname)
+        }).catch( err => {
+          resolve(deviceType)
+        })
+      }).then( hostname => {
         res.render('index', {
           title: title,
           device: deviceType,
           devicePrettyName: prettyName,
           hostname: hostname,
-          lang: lang,
-          views: views
-        });
-      }).catch( err => {
-        res.render('index', {
-          title: title,
-          device: deviceType,
-          devicePrettyName: prettyName,
-          hostname: deviceType,
-          lang: lang,
+          lang_key: lang_key,
+          lang: langs[lang_key],
           views: views
         });
       })

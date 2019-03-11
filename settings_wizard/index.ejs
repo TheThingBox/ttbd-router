@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <title><%= title %></title>
+  <title><%= lang('title', { name: devicePrettyName}) %></title>
   <link href="/materialize/font.css" rel="stylesheet">
   <link href="/materialize/materialize.min.css" rel="stylesheet" media="screen,projection">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -11,7 +11,7 @@
   <% } %>
   <nav class="nav-extended ttb-color-light-grey">
     <div class="nav-wrapper">
-      <div class="brand-logo center truncate"><%= title %></div>
+      <div class="brand-logo center truncate"><%= lang('title', { name: devicePrettyName}) %></div>
 
       <% /* %>
       <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
@@ -22,7 +22,7 @@
     <div class="nav-content">
       <ul class="scrollbar_s1 tabs tabs-transparent tabs-fixed-width">
         <% for (var i = 0; i < views.length; i++) { %>
-        <li class="tab tab_<%= views[i].order %> <% if(views[i].readable != true){ %>disabled<% } %>"><a href="#wizard_<%= views[i].name  %>" class="navtab navtab_<%= views[i].order %>"><%= views[i].name %></a></li>
+        <li id="tab_<%= views[i].name %>" class="tab tab_<%= views[i].order %> <% if(views[i].readable != true){ %>disabled<% } %>"><a href="#wizard_<%= views[i].name  %>" id="navtab_<%= views[i].name %>" class="navtab navtab_<%= views[i].order %>"><%= views[i].name %></a></li>
         <% } %>
         <% if (views.length == 0) { %>
         <li class="tab"><a href="#wizard_no_settings" class="navtab">no settings</a></li>
@@ -52,7 +52,7 @@
   <script src="/materialize/CryptoJS/crypto-js.min.js" type="text/javascript"></script> <!-- from https://cdnjs.com/libraries/crypto-js -->
   <script src="/materialize/materialize.min.js" type="text/javascript"></script>
   <script src="/materialize/ejs.min.js" type="text/javascript"></script>
-  <script src="/materialize/ejs_file_loader.js" type="text/javascript"></script>
+  <script src="/materialize/i18n.min.js" type="text/javascript"></script>
   <script src="/materialize/utils.js" type="text/javascript"></script>
   <script src="/materialize/Request.class.js" type="text/javascript"></script>
   <script>
@@ -60,15 +60,14 @@
     const params = {
       hostname: "<%= hostname %>",
       device: "<%= device %>",
-      lang: "<%= lang %>",
+      lang_key: "<%= lang_key %>",
       views: <%- JSON.stringify(views) %>
     };
-    for(var v in params.views){
-      form_params[params.views[v].name] = {}
-    }
+    var modules = []
+
   </script>
+  <script src="/settings_wizard/js" type="text/javascript"></script>
   <% for (var i = 0; i < views.length; i++) { %><script src="/settings_wizard/<%= views[i].name %>/<%= views[i].name %>.js" type="text/javascript"></script>
   <% } %>
-  <script src="/settings_wizard/js" type="text/javascript"></script>
 </body>
 </html>
