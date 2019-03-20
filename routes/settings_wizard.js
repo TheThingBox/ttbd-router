@@ -32,7 +32,7 @@ module.exports = function(app, dir, RED, settings_nodered) {
   var title = `${prettyName} : Settings Wizard`
   var viewsApi = {}
 
-  const moduleToIgnore = ['wifi', 'showall', 'account']
+  const moduleToIgnore = ['showall', 'account']
   var views = getDirectories(join(__dirname, '..', 'node_modules')).filter(name => name.indexOf('ttb-settings-wizard-view-') === 0).map( name => {
     let _name = name.substr(25)
     let _dir = join(__dirname, '..', 'node_modules', name)

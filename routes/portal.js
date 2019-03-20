@@ -72,7 +72,7 @@ module.exports = function(app, dir, RED, settings_nodered) {
         viewsApi[_name] = require(_indexApi)
         viewsApi[_name].init(app, _api, persistenceDir)
         _order = viewsApi[_name].order
-        _canIgnore = viewsApi[_name].canIgnore || false
+        _canIgnore = false
       }
 
       if(!_order && _order !== 0){

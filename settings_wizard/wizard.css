@@ -182,8 +182,34 @@
       min-width: 400px;
     }
 
+    footer .row, footer .col{
+      padding: 0px !important;
+      margin: 0px !important;
+    }
+
+    footer img {
+      min-width: 400px;
+      width: 100%;
+      object-fit: contain;
+    }
+
+    body {
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+
+    .main {
+      flex: 1 0 auto;
+    }
+
     @media (max-width: 600px) {
       .errors_container {
         min-width: 200px;
+      }
+
+      footer img {
+        min-width: 200px;
+        width: 100%;
       }
     }
