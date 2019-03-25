@@ -23,13 +23,17 @@ module.exports = function(app, dir, RED, settings_nodered) {
   if(deviceTypeList.indexOf(deviceType) === -1) {
     deviceType = deviceTypeList[0]
   }
+  
+  function capitalizeFirstLetter(string){
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
 
-  const prettyName = deviceType==deviceTypeList[0]?'TimeSquAir':(deviceType==deviceTypeList[1])?'TheThingBox':deviceType
+  const prettyName = deviceType==deviceTypeList[0]?'TimeSquAir':(deviceType==deviceTypeList[1])?'TheThingBox':capitalizeFirstLetter(deviceType)
 
   app.set('views', wizardViewPath);
   app.set('view engine', 'ejs');
 
-  var title = `${prettyName} : Settings Wizard`
+  var title = `${prettyName}`
   var viewsApi = {}
 
   const moduleToIgnore = ['showall', 'account']
