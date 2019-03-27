@@ -334,10 +334,10 @@ var VIEW = function() {
   }
 
   VIEW.prototype.disableNextViews = function(){
-    var _nextOrder = this.getNextViewIndex()
-    while(_nextOrder !== null){
-      VIEW.disableView(_nextOrder)
-      _nextOrder = VIEW.getNextViewIndex(_nextOrder)
+    var _nextIndex = this.getNextViewIndex()
+    while(_nextIndex !== null){
+      VIEW.disableView(_nextIndex)
+      _nextIndex = VIEW.getNextViewIndex(_nextIndex)
     }
   }
 
@@ -521,6 +521,8 @@ document.addEventListener('DOMContentLoaded', function() {
     VIEW.lang = i18n.create({ values: lang })
     var promises = []
     var loaded_promises = []
+    var reachableRequest = new Request('/settings_wizard/reachable')
+    params.promisesReachable = reachableRequest.get()
 
     for(var i in modules){
       modules[i].instance = new (modules[i].module)()

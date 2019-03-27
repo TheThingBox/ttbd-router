@@ -2,6 +2,7 @@ module.exports = function(app, dir, RED, settings_nodered) {
   const { existsSync, statSync, readdirSync, readFileSync } = require('fs')
   const { join } = require('path')
   const express = require('express');
+  const bodyParser = require('body-parser');
   const InterfaceUtils = require('ttbd-interface-utils')
   const interface_utils = new InterfaceUtils({hydra_exec_host: "mosquitto"})
   const getDirectories = source => readdirSync(source).filter(name => statSync(join(source, name)).isDirectory())
@@ -12,6 +13,8 @@ module.exports = function(app, dir, RED, settings_nodered) {
 
   var cguPassed = false
   var langs = {}
+
+  var promisesReachable = [interface_utils.ZOIB.reachable(), interface_utils.Coldfacts.reachable()]
 
   const deviceTypeList = ['timesquair', 'thethingbox']
   var deviceType = require(join(dir, 'package.json'))
@@ -24,12 +27,16 @@ module.exports = function(app, dir, RED, settings_nodered) {
     deviceType = deviceTypeList[0]
   }
 
-  const prettyName = deviceType==deviceTypeList[0]?'TimeSquAir':(deviceType==deviceTypeList[1])?'TheThingBox':deviceType
+  function capitalizeFirstLetter(string){
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
+  const prettyName = deviceType==deviceTypeList[0]?'TimeSquAir':(deviceType==deviceTypeList[1])?'TheThingBox':capitalizeFirstLetter(deviceType)
 
   app.set('views', wizardViewPath);
   app.set('view engine', 'ejs');
 
-  var title = `${prettyName} : Settings Wizard`
+  var title = `${prettyName}`
   var viewsApi = {}
 
   const moduleToIgnore = ['showall', 'account']
@@ -100,42 +107,43 @@ module.exports = function(app, dir, RED, settings_nodered) {
   updateViews()
 
   function render_wizard(req, res){
-      res.header("Access-Control-Allow-Origin", "*");
-      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-      let lang_key = req.acceptsLanguages('fr-FR', 'en-US')
-      if( ['fr-FR', 'fr'].indexOf(lang_key) !== -1){
-        lang_key = 'fr-FR'
-      } else {
-        lang_key = 'en-US'
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    let lang_key = req.acceptsLanguages('fr-FR', 'en-US')
+    if( ['fr-FR', 'fr'].indexOf(lang_key) !== -1){
+      lang_key = 'fr-FR'
+    } else {
+      lang_key = 'en-US'
+    }
+    if(!langs.hasOwnProperty(lang_key)){
+      let lang = readFileSync(join(wizardViewPath, 'locales', lang_key, 'settings_wizard.json'))
+      try{
+        lang = JSON.parse(lang)
+      } catch(e){
+        lang = {}
       }
-      if(!langs.hasOwnProperty(lang_key)){
-        let lang = readFileSync(join(wizardViewPath, 'locales', lang_key, 'settings_wizard.json'))
-        try{
-          lang = JSON.parse(lang)
-        } catch(e){
-          lang = {}
-        }
-        langs[lang_key] = i18n.create({ values: lang })
-      }
-      updateViews()
+      langs[lang_key] = i18n.create({ values: lang })
+    }
+    updateViews()
 
-      new Promise( (resolve, reject) => {
-        interface_utils.getHostname().then( hostname =>{
-          resolve(hostname)
-        }).catch( err => {
-          resolve(deviceType)
-        })
-      }).then( hostname => {
-        res.render('index', {
-          title: title,
-          device: deviceType,
-          devicePrettyName: prettyName,
-          hostname: hostname,
-          lang_key: lang_key,
-          lang: langs[lang_key],
-          views: views
-        });
+    new Promise( (resolve, reject) => {
+      interface_utils.getHostname().then( hostname =>{
+        resolve(hostname)
+      }).catch( err => {
+        resolve(deviceType)
       })
+    })
+    .then( hostname => {
+      res.render('index', {
+        title: title,
+        device: deviceType,
+        devicePrettyName: prettyName,
+        hostname: hostname,
+        lang_key: lang_key,
+        lang: langs[lang_key],
+        views: views
+      });
+    })
   }
 
   app.get("/settings_wizard", render_wizard);
@@ -155,6 +163,11 @@ module.exports = function(app, dir, RED, settings_nodered) {
   })
   app.get("/settings_wizard/js", function(req, res){
     res.sendFile(join(wizardViewPath, 'wizard.js'));
+  })
+  app.get("/settings_wizard/reachable", function(req, res){
+    Promise.all(promisesReachable).then(function(values) {
+      res.json({zoib: values[0], coldfacts: values[1]})
+    })
   })
   app.use('/settings_wizard/locales', express.static(join(wizardViewPath, 'locales')))
 
@@ -198,4 +211,28 @@ module.exports = function(app, dir, RED, settings_nodered) {
       }
     }
   })
+
+  function redirect_portal(req, res){
+    res.redirect(302, 'http://192.168.61.1/settings_wizard');
+  }
+
+  // captive portal detection : windows
+  app.use("/ncsi.txt", bodyParser.urlencoded({ extended: true }));
+  app.use("/connecttest.txt", bodyParser.urlencoded({ extended: true }));
+  app.use("/redirect", bodyParser.urlencoded({ extended: true }));
+  app.get("/ncsi.txt ", redirect_portal);
+  app.get("/connecttest.txt", redirect_portal);
+  app.get("/redirect", redirect_portal);
+  // captive portal detection : android
+  app.use("/generate_204", bodyParser.urlencoded({ extended: true }));
+  app.get("/generate_204", redirect_portal);
+  // captive portal detection : ios
+  app.use("/hotspot-detect.html", bodyParser.urlencoded({ extended: true }));
+  app.get("/hotspot-detect.html", redirect_portal);
+
+  try {
+    var ssid_id = (settings_nodered.functionGlobalContext.settings.id || "ap").slice(-4)
+    viewsApi['wifi'].enableAPOnWlan(ssid_id)
+  } catch(e){}
+
 }

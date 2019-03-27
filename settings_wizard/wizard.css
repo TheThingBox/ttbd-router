@@ -96,6 +96,10 @@
       background-color: rgba(68,68,68,0.1)
     }
 
+    .tabs .tab a:focus, .tabs .tab a:focus.disabled  {
+      background-color: rgba(68,68,68,0)
+    }
+
     [type="checkbox"].filled-in:checked+span:not(.lever):after {
       border-color: #a1a1a1 !important;
       background-color: #a1a1a1 !important;
