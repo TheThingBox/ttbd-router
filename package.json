@@ -31,9 +31,9 @@
     "bcrypt": "3.0.2",
     "ttb-settings-wizard-view-account": "TheThingBox/ttb-settings-wizard-view-account#6197555",
     "ttb-settings-wizard-view-cgu": "TheThingBox/ttb-settings-wizard-view-cgu#0bf69af",
-    "ttb-settings-wizard-view-name": "TheThingBox/ttb-settings-wizard-view-name#b864c8c",
-    "ttb-settings-wizard-view-validation": "TheThingBox/ttb-settings-wizard-view-validation#45ab17f",
-    "ttb-settings-wizard-view-wifi": "TheThingBox/ttb-settings-wizard-view-wifi#6d0dd60",
+    "ttb-settings-wizard-view-name": "TheThingBox/ttb-settings-wizard-view-name#724a2be",
+    "ttb-settings-wizard-view-validation": "TheThingBox/ttb-settings-wizard-view-validation#6f5b76c4",
+    "ttb-settings-wizard-view-wifi": "TheThingBox/ttb-settings-wizard-view-wifi#99d18bd",
     "ttbd-interface-utils": "TheThingBox/ttbd-interface-utils#d63337f"
   }
 }

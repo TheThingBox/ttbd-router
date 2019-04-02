@@ -239,6 +239,10 @@ var VIEW = function() {
     } else {
       this.goToNextView()
     }
+
+    if(typeof this.ignored === 'function'){
+      this.ignored()
+    }
   }
 
   VIEW.prototype.unIgnoreView = function(){
@@ -254,6 +258,10 @@ var VIEW = function() {
         clearTimeout(this.form._willShowErrors)
       }
       this.form._willShowErrors = setTimeout(() => { this.isOk(true) }, 3000)
+    }
+
+    if(typeof this.unIgnored === 'function'){
+      this.unIgnored()
     }
   }
 
@@ -500,7 +508,7 @@ var WIZARD = function() {
     }
     _req.post()
     .then( () => {
-      WIZARD.waitForDevice(5000).then( () => {
+      WIZARD.waitForDevice(15000).then( () => {
         setTimeout( () => {
           window.location = `${WIZARD.requestAlive.getProtocol()}//${WIZARD.requestAlive.getHost()}/`
         }, 3000)
@@ -571,4 +579,3 @@ document.addEventListener('DOMContentLoaded', function() {
     })
   })
 });
-
