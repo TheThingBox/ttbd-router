@@ -1,5 +1,5 @@
 {
-  "title": "%{name} : Assistant de configuration",
+  "title": "Assistant de configuration",
   "menu": "menu",
   "no_settings_tab": "Aucun paramétrage",
   "no_settings_content": "Oups, il semble qu'il n'y ait aucun paramétrage possible, s'il vous plait contactez le support :",

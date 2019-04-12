@@ -233,11 +233,13 @@ var VIEW = function() {
     if(_errorDiv){
       _errorDiv.classList.remove('is-visible')
     }
-    if(wrapper){
-      wrapper.classList.add('is-visible');
-      setTimeout(() => { this.goToNextView() }, tout)
-    } else {
-      this.goToNextView()
+    if(tout !== null){
+      if(wrapper){
+        wrapper.classList.add('is-visible');
+        setTimeout(() => { this.goToNextView() }, tout)
+      } else {
+        this.goToNextView()
+      }
     }
 
     if(typeof this.ignored === 'function'){
@@ -567,10 +569,9 @@ document.addEventListener('DOMContentLoaded', function() {
           if(modules[i].instance.isOk()){
             modules[i].instance.checkButtonNextStats()
             if(modules[i].instance.params.canIgnore === true){
-              modules[i].instance.ignoreView(0)
-            } else {
-              modules[i].instance.goToNextView()
-            }
+              modules[i].instance.ignoreView(null)
+            } 
+            modules[i].instance.goToNextView()
           } else {
             break
           }

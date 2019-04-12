@@ -1,5 +1,5 @@
 {
-  "title": "%{name} : Settings Wizard",
+  "title": "Settings Wizard",
   "menu": "menu",
   "no_settings_tab": "no settings",
   "no_settings_content": "Oups, it seems there are no settings available, please contact the support :",

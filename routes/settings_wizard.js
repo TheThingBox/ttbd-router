@@ -15,6 +15,7 @@ module.exports = function(app, dir, RED, settings_nodered) {
   var langs = {}
 
   var promisesReachable = [interface_utils.ZOIB.reachable(), interface_utils.Coldfacts.reachable()]
+  var promiseInterfaces = interface_utils.getInterfaces()
 
   const deviceTypeList = ['timesquair', 'thethingbox']
   var deviceType = require(join(dir, 'package.json'))
@@ -134,15 +135,21 @@ module.exports = function(app, dir, RED, settings_nodered) {
       })
     })
     .then( hostname => {
-      res.render('index', {
-        title: title,
-        device: deviceType,
-        devicePrettyName: prettyName,
-        hostname: hostname,
-        lang_key: lang_key,
-        lang: langs[lang_key],
-        views: views
-      });
+      promiseInterfaces.then(interfaces =>{
+        let _views = views.slice()
+        if(!interfaces || interfaces.findIndex(item => item.name === 'wlan0') == -1){
+          _views = _views.filter(item => item.name !== 'wifi')
+        }
+        res.render('index', {
+          title: title,
+          device: deviceType,
+          devicePrettyName: prettyName,
+          hostname: hostname,
+          lang_key: lang_key,
+          lang: langs[lang_key],
+          views: _views
+        });
+      })
     })
   }
 
@@ -164,11 +171,19 @@ module.exports = function(app, dir, RED, settings_nodered) {
   app.get("/settings_wizard/js", function(req, res){
     res.sendFile(join(wizardViewPath, 'wizard.js'));
   })
+
   app.get("/settings_wizard/reachable", function(req, res){
     Promise.all(promisesReachable).then(function(values) {
       res.json({zoib: values[0], coldfacts: values[1]})
     })
   })
+
+  app.get("/settings_wizard/interfaces", function(req, res){
+    promiseInterfaces.then(function(values) {
+      res.json(values)
+    })
+  })
+
   app.use('/settings_wizard/locales', express.static(join(wizardViewPath, 'locales')))
 
   app.post("/settings_wizard/reboot", function(req, res){
@@ -215,6 +230,9 @@ module.exports = function(app, dir, RED, settings_nodered) {
   function redirect_portal(req, res){
     res.redirect(302, 'http://192.168.61.1/settings_wizard');
   }
+
+  app.use("/portal", bodyParser.urlencoded({ extended: true }));
+  app.get("/portal", redirect_portal);
 
   // captive portal detection : windows
   app.use("/ncsi.txt", bodyParser.urlencoded({ extended: true }));
