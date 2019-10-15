@@ -1,5 +1,5 @@
 {
-  "name": "ttb-router",
+  "name": "ttbd-router",
   "description": "Express route to use for thethingbox",
   "private": true,
   "version": "0.1.2",
